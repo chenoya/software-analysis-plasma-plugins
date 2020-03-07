@@ -1,0 +1,80 @@
+package be.uclouvain.gdbmiapi.commands;
+
+import be.uclouvain.gdbmiapi.*;
+import org.apache.commons.text.StringEscapeUtils;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+
+import static be.uclouvain.gdbmiapi.Utils.assertOrThrow;
+
+public class File {
+    /**
+     * Specify the executable file to be debugged. This file is the one from which the symbol table is also read.
+     * If no file is specified, the command clears the executable and symbol information.
+     * If breakpoints are set when using this command with no arguments, GDB will produce error messages.
+     * Otherwise, no output is produced, except a completion notification.<br><br>
+     * The corresponding GDB command is <b>‘file’</b>.
+     *
+     * @param gdbProcess the gdb instance
+     * @param file  the file path
+     * @throws IOException
+     * @throws GDBException
+     */
+    public static void file(GdbProcess gdbProcess, Path file) throws IOException, GDBException {
+        String res = gdbProcess.executeGDBCommand("-file-exec-and-symbols \"" + StringEscapeUtils.escapeJava(file.toString()) + "\"");
+        Utils.checkDone(res);
+    }
+
+    /**
+     * Specify the executable file to be debugged. Unlike ‘-file-exec-and-symbols’,
+     * the symbol table is not read from this file.
+     * If used without argument, GDB clears the information about the executable file.
+     * No output is produced, except a completion notification.<br><br>
+     * The corresponding GDB command is <b>‘exec-file’</b>.
+     *
+     * @param gdbProcess the gdb instance
+     * @param file  the file path
+     * @throws IOException
+     * @throws GDBException
+     */
+    public static void file_exec(GdbProcess gdbProcess, Path file) throws IOException, GDBException {
+        String res = gdbProcess.executeGDBCommand("-file-exec-file \"" + StringEscapeUtils.escapeJava(file.toString()) + "\"");
+        Utils.checkDone(res);
+    }
+
+    /**
+     * List the line number, the current source file, and the absolute path to the current source file for the current
+     * executable. The macro information field has a value of ‘1’ or ‘0’ depending on whether or not the file includes
+     * preprocessor macro information.<br><br>
+     * The GDB equivalent is <b>‘info source’</b>
+     *
+     * @param gdbProcess the gdb instance
+     * @throws IOException
+     * @throws GDBException
+     */
+    public static Map<String, Object> info_source(GdbProcess gdbProcess) throws IOException, GDBException {
+        String res = gdbProcess.executeGDBCommand("-file-list-exec-source-file");
+        MIOutputParser.OutputContext output = ParseMI.parse(res);
+        assertOrThrow(res, output.result_record() != null);
+        assertOrThrow(res, output.result_record().result_class().DONE() != null);
+        assertOrThrow(res, output.result_record().result().size() == 4);
+        assertOrThrow(res, output.result_record().result(0).variable().getText().equals("line"));
+        assertOrThrow(res, output.result_record().result(1).variable().getText().equals("file"));
+        assertOrThrow(res, output.result_record().result(2).variable().getText().equals("fullname"));
+        assertOrThrow(res, output.result_record().result(3).variable().getText().equals("macro-info"));
+        Map<String, Object> fields = new HashMap<>();
+        fields.put(output.result_record().result(0).variable().getText(),
+                Long.parseUnsignedLong(Utils.extractValue(output.result_record().result(0).value().getText())));
+        fields.put(output.result_record().result(1).variable().getText(),
+                Utils.extractValue(output.result_record().result(1).value().getText()));
+        fields.put(output.result_record().result(2).variable().getText(),
+                Utils.extractValue(output.result_record().result(2).value().getText()));
+        fields.put(output.result_record().result(3).variable().getText(),
+                Boolean.parseBoolean(Utils.extractValue(output.result_record().result(3).value().getText())));
+        return fields;
+    }
+
+}
