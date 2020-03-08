@@ -134,8 +134,6 @@ public class GdbProcess {
 
     private void disableAsyncExec() throws IOException, GDBException {
         String res = executeGDBCommand("-gdb-set mi-async off");
-        if (!res.equals("^done\n(gdb) \n")) {
-            throw parseError(res);
-        }
+        Utils.checkDone(res);
     }
 }

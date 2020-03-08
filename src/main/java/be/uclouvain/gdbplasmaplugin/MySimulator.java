@@ -25,6 +25,8 @@ public class MySimulator extends AbstractModel {
 
     private static IdVariableName PC_ID = new IdVariableName("pc");
     private static IdVariableName LINE_ID = new IdVariableName("line");
+    private static IdVariableName CF_ID = new IdVariableName("cf");
+    private static IdVariableName OF_ID = new IdVariableName("of");
     private static ArrayList<IdVariableName> VARIDS = new ArrayList<>();
 
     private String filePath = null;
@@ -113,6 +115,8 @@ public class MySimulator extends AbstractModel {
             Map<InterfaceIdentifier, Value> map = new HashMap<>();
             map.put(PC_ID, new LongValue(Long.parseUnsignedLong(DataManipulation.data_eval_expr(gdbProcess, "$pc").split(" ")[0].substring(2), 16)));
             map.put(LINE_ID, new LongValue((Long) File.info_source(gdbProcess).get("line")));
+            map.put(CF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("CF") ? 1 : 0));
+            map.put(OF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("OF") ? 1 : 0));
             for (InterfaceIdentifier i : VARIDS) {
                 //TODO specific type instead of ValueInt
                 map.put(i, new IntValue(Integer.parseInt(DataManipulation.data_eval_expr(gdbProcess, i.getName()))));
@@ -145,6 +149,8 @@ public class MySimulator extends AbstractModel {
                 Map<InterfaceIdentifier, Value> map = new HashMap<>();
                 map.put(PC_ID, new LongValue(Long.parseUnsignedLong(DataManipulation.data_eval_expr(gdbProcess, "$pc").split(" ")[0].substring(2), 16)));
                 map.put(LINE_ID, new LongValue((Long) File.info_source(gdbProcess).get("line")));
+                map.put(CF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("CF") ? 1 : 0));
+                map.put(OF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("OF") ? 1 : 0));
                 for (InterfaceIdentifier i : VARIDS) {
                     //TODO specific type instead of ValueInt
                     map.put(i, new IntValue(Integer.parseInt(DataManipulation.data_eval_expr(gdbProcess, i.getName()))));
@@ -191,6 +197,8 @@ public class MySimulator extends AbstractModel {
         ArrayList<InterfaceIdentifier> res = new ArrayList<>(VARIDS.size() + 2);
         res.add(PC_ID);
         res.add(LINE_ID);
+        res.add(CF_ID);
+        res.add(OF_ID);
         res.addAll(VARIDS);
         return res.toArray(new InterfaceIdentifier[] {});
     }
@@ -200,6 +208,8 @@ public class MySimulator extends AbstractModel {
         Map<String, InterfaceIdentifier> mymap = new HashMap<String, InterfaceIdentifier>();
         mymap.put(PC_ID.getName(), PC_ID);
         mymap.put(LINE_ID.getName(), LINE_ID);
+        mymap.put(CF_ID.getName(), CF_ID);
+        mymap.put(OF_ID.getName(), OF_ID);
         for (InterfaceIdentifier i : VARIDS) {
             mymap.put(i.getName(), i);
         }

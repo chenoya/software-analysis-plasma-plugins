@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PlasmaProject name="Default">
+  <models>
+    <model name="data_0" type="Executable_simulator">
+      <content>x y
+../../gdbplasmaplugin/src/test/plasma/integer_overflow/integer</content>
+    </model>
+  </models>
+  <requirements>
+    <requirement name="data_1" type="bltl">
+      <content>G &lt;= #100 line!=13</content>
+    </requirement>
+    <requirement name="data_2" type="bltl">
+      <content>G &lt;= #100 !(line=11 &amp; of=1)</content>
+    </requirement>
+  </requirements>
+  <resources />
+</PlasmaProject>
