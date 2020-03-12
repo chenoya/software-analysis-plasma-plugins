@@ -1,4 +1,4 @@
-package be.uclouvain.gdbplasmaplugin;
+package be.uclouvain.gdbsimulator;
 
 public interface Value<T> {
     T getValue();

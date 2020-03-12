@@ -1,4 +1,4 @@
-package be.uclouvain.gdbplasmaplugin;
+package be.uclouvain.gdbsimulator;
 
 public class LongValue implements Value<Long> {
     private Long content;

@@ -1,4 +1,4 @@
-package be.uclouvain.gdbplasmaplugin;
+package be.uclouvain.gdbsimulator;
 
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceIdentifier;
 

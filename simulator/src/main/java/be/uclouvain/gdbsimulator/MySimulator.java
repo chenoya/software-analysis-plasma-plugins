@@ -1,4 +1,4 @@
-package be.uclouvain.gdbplasmaplugin;
+package be.uclouvain.gdbsimulator;
 
 import be.uclouvain.gdbmiapi.GDBException;
 import be.uclouvain.gdbmiapi.GdbProcess;
@@ -111,20 +111,9 @@ public class MySimulator extends AbstractModel {
 
         try {
             trace = new ArrayList<>();
-
-            Map<InterfaceIdentifier, Value> map = new HashMap<>();
-            map.put(PC_ID, new LongValue(Long.parseUnsignedLong(DataManipulation.data_eval_expr(gdbProcess, "$pc").split(" ")[0].substring(2), 16)));
-            map.put(LINE_ID, new LongValue((Long) File.info_source(gdbProcess).get("line")));
-            map.put(CF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("CF") ? 1 : 0));
-            map.put(OF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("OF") ? 1 : 0));
-            for (InterfaceIdentifier i : VARIDS) {
-                //TODO specific type instead of ValueInt
-                map.put(i, new IntValue(Integer.parseInt(DataManipulation.data_eval_expr(gdbProcess, i.getName()))));
-            }
-
-            trace.add(new MyState(map));
+            trace.add(simulate_step());
             return getCurrentState();
-        } catch (IOException | GDBException e) {
+        } catch (IOException e) {
             throw new PlasmaSimulatorException(e.getMessage());
         }
     }
@@ -139,6 +128,39 @@ public class MySimulator extends AbstractModel {
         return newPath();
     }
 
+    private MyState simulate_step() throws IOException {
+        Map<InterfaceIdentifier, Value> map = new HashMap<>();
+        try {
+            map.put(PC_ID, new LongValue(Long.parseUnsignedLong(DataManipulation.data_eval_expr(gdbProcess, "$pc").split(" ")[0].substring(2), 16)));
+        } catch (Exception e) {
+            map.put(PC_ID, new NoValue());
+        }
+        try {
+            map.put(LINE_ID, new LongValue((Long) File.info_source(gdbProcess).get("line")));
+        } catch (Exception e) {
+            map.put(LINE_ID, new NoValue());
+        }
+        try {
+            map.put(CF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("CF") ? 1 : 0));
+        } catch (Exception e) {
+            map.put(CF_ID, new NoValue());
+        }
+        try {
+            map.put(OF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("OF") ? 1 : 0));
+        } catch (Exception e) {
+            map.put(OF_ID, new NoValue());
+        }
+        for (InterfaceIdentifier i : VARIDS) {
+            //TODO specific type instead of ValueInt
+            try {
+                map.put(i, new IntValue(Integer.parseInt(DataManipulation.data_eval_expr(gdbProcess, i.getName()))));
+            } catch (Exception e) {
+                map.put(i, new NoValue());
+            }
+        }
+        return new MyState(map);
+    }
+
     @Override
     public InterfaceState simulate() throws PlasmaSimulatorException {
         try {
@@ -146,16 +168,7 @@ public class MySimulator extends AbstractModel {
             if (File.info_source(gdbProcess).get("file").equals("../csu/libc-start.c")) {
                 throw new PlasmaDeadlockException(getCurrentState(), getTraceLength());
             } else {
-                Map<InterfaceIdentifier, Value> map = new HashMap<>();
-                map.put(PC_ID, new LongValue(Long.parseUnsignedLong(DataManipulation.data_eval_expr(gdbProcess, "$pc").split(" ")[0].substring(2), 16)));
-                map.put(LINE_ID, new LongValue((Long) File.info_source(gdbProcess).get("line")));
-                map.put(CF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("CF") ? 1 : 0));
-                map.put(OF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("OF") ? 1 : 0));
-                for (InterfaceIdentifier i : VARIDS) {
-                    //TODO specific type instead of ValueInt
-                    map.put(i, new IntValue(Integer.parseInt(DataManipulation.data_eval_expr(gdbProcess, i.getName()))));
-                }
-                trace.add(new MyState(map));
+                trace.add(simulate_step());
                 return getCurrentState();
             }
 

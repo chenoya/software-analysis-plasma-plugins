@@ -7,96 +7,10 @@
     <groupId>be.uclouvain.gdbplasmaplugin</groupId>
     <artifactId>gdbplasmaplugin</artifactId>
     <version>1.0.0</version>
-
-    <properties>
-        <plasma-worflow>${project.basedir}/../Plasma/plasmalab-1.4.4/libs/fr.inria.plasmalab.workflow-1.4.4.jar</plasma-worflow>
-        <plasma-jspf>${project.basedir}/../Plasma/plasmalab-1.4.4/libs/jspf.core-1.0.2.jar</plasma-jspf>
-        <plasma-plugin-folder>${project.basedir}/../Plasma/plasmalab-1.4.4/plugins</plasma-plugin-folder>
-        <encoding>UTF-8</encoding>
-    </properties>
-
-    <packaging>jar</packaging>
-
-    <dependencies>
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-text</artifactId>
-            <version>1.8</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.antlr/antlr4 -->
-        <dependency>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr4</artifactId>
-            <version>4.8</version>
-        </dependency>
-
-        <!-- not included in the jar -->
-        <dependency>
-            <groupId>jspf</groupId>
-            <artifactId>core</artifactId>
-            <version>1.0.2</version>
-            <scope>system</scope>
-            <systemPath>${plasma-jspf}</systemPath>
-        </dependency>
-
-        <!-- not included in the jar -->
-        <dependency>
-            <groupId>fr.inria.plasmalab</groupId>
-            <artifactId>fr.inria.plasmalab.workflow</artifactId>
-            <version>1.4.4-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>${plasma-worflow}</systemPath>
-        </dependency>
-
-    </dependencies>
-
-    <build>
-        <plugins>
-            <!-- to build the antlr syntax -->
-            <plugin>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-maven-plugin</artifactId>
-                <version>4.8</version>
-                <configuration>
-                    <listener>false</listener>
-                    <visitor>false</visitor>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>antlr4</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- to compile the code -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>12</source>
-                    <target>12</target>
-                </configuration>
-            </plugin>
-
-            <!-- to build the JAR file with dependencies -->
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <outputDirectory>${plasma-plugin-folder}</outputDirectory>
-                </configuration>
-            </plugin>
-
-        </plugins>
-    </build>
+    <modules>
+        <module>simulator</module>
+    </modules>
+    <packaging>pom</packaging>
 
 
 </project>
