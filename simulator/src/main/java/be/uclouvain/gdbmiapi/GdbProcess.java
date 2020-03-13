@@ -12,7 +12,7 @@ public class GdbProcess {
 
     private Process pr;
 
-    public GdbProcess(PrintStream out) throws IOException, GDBException {
+    public GdbProcess(PrintStream out) throws IOException, GdbException {
         this.out = out;
         Runtime rt = Runtime.getRuntime();
         this.pr = rt.exec("gdb --interpreter=mi");
@@ -32,7 +32,7 @@ public class GdbProcess {
             //ProgramExecution.nexti(gdbProcess);
             System.out.println(DataManipulation.data_eval_expr(gdbProcess, "x"));
             System.out.println("2");
-        } catch (GDBException e) {
+        } catch (GdbException e) {
             e.printStackTrace();
         }
     }*/
@@ -128,11 +128,11 @@ public class GdbProcess {
         return res;
     }
 
-    private GDBException parseError(String res) {
-        return new GDBException(res);
+    private GdbException parseError(String res) {
+        return new GdbException(res);
     }
 
-    private void disableAsyncExec() throws IOException, GDBException {
+    private void disableAsyncExec() throws IOException, GdbException {
         String res = executeGDBCommand("-gdb-set mi-async off");
         Utils.checkDone(res);
     }

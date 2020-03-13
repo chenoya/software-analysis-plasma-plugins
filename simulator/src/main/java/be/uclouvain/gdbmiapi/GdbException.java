@@ -1,7 +1,7 @@
 package be.uclouvain.gdbmiapi;
 
-public class GDBException extends Exception {
-    public GDBException(String message) {
+public class GdbException extends Exception {
+    public GdbException(String message) {
         super(message);
         //TODO parse error
     }

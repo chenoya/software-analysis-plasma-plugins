@@ -2,11 +2,11 @@ package be.uclouvain.gdbsimulator;
 
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceIdentifier;
 
-public class IdVariableName implements InterfaceIdentifier {
+public class GdbExpression implements InterfaceIdentifier {
 
 	String name;
 
-	public IdVariableName(String name) {
+	public GdbExpression(String name) {
 		this.name = name;
 	}
 	

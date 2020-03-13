@@ -3,7 +3,7 @@ package be.uclouvain.gdbmiapi;
 import org.antlr.v4.runtime.*;
 
 public class ParseMI {
-    public static MIOutputParser.OutputContext parse(String text) throws GDBException {
+    public static MIOutputParser.OutputContext parse(String text) throws GdbException {
         TokenSource lexer = new MIOutputLexer(CharStreams.fromString(text));
 
         TokenStream tokens = new CommonTokenStream(lexer);
@@ -22,7 +22,7 @@ public class ParseMI {
         try {
             return parser.output();
         } catch (IllegalArgumentException e) {
-            throw new GDBException(e.getMessage());
+            throw new GdbException(e.getMessage());
         }
 
     }

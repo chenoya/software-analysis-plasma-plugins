@@ -21,9 +21,9 @@ public class File {
      * @param gdbProcess the gdb instance
      * @param file  the file path
      * @throws IOException
-     * @throws GDBException
+     * @throws GdbException
      */
-    public static void file(GdbProcess gdbProcess, Path file) throws IOException, GDBException {
+    public static void file(GdbProcess gdbProcess, Path file) throws IOException, GdbException {
         String res = gdbProcess.executeGDBCommand("-file-exec-and-symbols \"" + StringEscapeUtils.escapeJava(file.toString()) + "\"");
         Utils.checkDone(res);
     }
@@ -38,9 +38,9 @@ public class File {
      * @param gdbProcess the gdb instance
      * @param file  the file path
      * @throws IOException
-     * @throws GDBException
+     * @throws GdbException
      */
-    public static void file_exec(GdbProcess gdbProcess, Path file) throws IOException, GDBException {
+    public static void file_exec(GdbProcess gdbProcess, Path file) throws IOException, GdbException {
         String res = gdbProcess.executeGDBCommand("-file-exec-file \"" + StringEscapeUtils.escapeJava(file.toString()) + "\"");
         Utils.checkDone(res);
     }
@@ -53,9 +53,9 @@ public class File {
      *
      * @param gdbProcess the gdb instance
      * @throws IOException
-     * @throws GDBException
+     * @throws GdbException
      */
-    public static Map<String, Object> info_source(GdbProcess gdbProcess) throws IOException, GDBException {
+    public static Map<String, Object> info_source(GdbProcess gdbProcess) throws IOException, GdbException {
         String res = gdbProcess.executeGDBCommand("-file-list-exec-source-file");
         MIOutputParser.OutputContext output = ParseMI.parse(res);
         assertOrThrow(res, output.result_record() != null);

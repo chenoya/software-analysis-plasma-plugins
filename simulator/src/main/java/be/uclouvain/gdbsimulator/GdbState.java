@@ -8,12 +8,12 @@ import fr.inria.plasmalab.workflow.exceptions.PlasmaSimulatorException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MyState implements InterfaceState {
+public class GdbState implements InterfaceState {
 
 	private Map<InterfaceIdentifier, Value> varContentII;
 	private Map<String, Value> varContentStr;
 	
-	public MyState(Map<InterfaceIdentifier, Value> variablesContent) {
+	public GdbState(Map<InterfaceIdentifier, Value> variablesContent) {
 		this.varContentII = variablesContent;
 		varContentStr = new HashMap<>();
 		variablesContent.forEach((i, v) -> {
@@ -27,7 +27,7 @@ public class MyState implements InterfaceState {
 	  
 	@Override
 	public String getCategory() {
-		return "MyState";
+		return "GdbState";
 	}
 
 	@Override
@@ -39,7 +39,7 @@ public class MyState implements InterfaceState {
 	public InterfaceState cloneState() {
 		return null;
 		//TODO deep copy ?
-		//return new MyState(varContentII);
+		//return new GdbState(varContentII);
 	}
 
 	@Override

@@ -1,8 +1,9 @@
 package be.uclouvain.gdbsimulator;
 
-import be.uclouvain.gdbmiapi.GDBException;
+import be.uclouvain.gdbmiapi.GdbException;
 import be.uclouvain.gdbmiapi.GdbProcess;
 import be.uclouvain.gdbmiapi.commands.*;
+import be.uclouvain.gdbmiapi.commands.File;
 import fr.inria.plasmalab.workflow.data.AbstractModel;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceIdentifier;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceState;
@@ -10,24 +11,18 @@ import fr.inria.plasmalab.workflow.exceptions.PlasmaDataException;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaDeadlockException;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaSimulatorException;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class MySimulator extends AbstractModel {
+public class GdbSimulator extends AbstractModel {
 
-    private static IdVariableName PC_ID = new IdVariableName("pc");
-    private static IdVariableName LINE_ID = new IdVariableName("line");
-    private static IdVariableName CF_ID = new IdVariableName("cf");
-    private static IdVariableName OF_ID = new IdVariableName("of");
-    private static ArrayList<IdVariableName> VARIDS = new ArrayList<>();
+    private static GdbExpression PC_ID = new GdbExpression("pc");
+    private static GdbExpression LINE_ID = new GdbExpression("line");
+    private static GdbExpression CF_ID = new GdbExpression("cf");
+    private static GdbExpression OF_ID = new GdbExpression("of");
+    private static ArrayList<GdbExpression> VARIDS = new ArrayList<>();
+    private static String SOURCE_FILE = "";
 
     private String filePath = null;
 
@@ -35,7 +30,7 @@ public class MySimulator extends AbstractModel {
 
     private List<InterfaceState> trace;
 
-    public MySimulator(String name, String content, String id) {
+    public GdbSimulator(String name, String content, String id) {
         this.name = name;
         this.content = content;
         this.errors = new ArrayList<>();
@@ -43,7 +38,7 @@ public class MySimulator extends AbstractModel {
         this.id = id;
     }
 
-    public MySimulator(String name, java.io.File file, String id) throws PlasmaDataException {
+    public GdbSimulator(String name, java.io.File file, String id) throws PlasmaDataException {
         this.name = name;
         this.content = "";
         this.errors = new ArrayList<>();
@@ -69,26 +64,28 @@ public class MySimulator extends AbstractModel {
 
         // Verify model content
         String[] result = content.split(System.lineSeparator());
-        if(result.length != 2) {
-            errors.add(new PlasmaDataException("Need two lines : variable list + path to executable"));
+        if (result.length != 3) {
+            errors.add(new PlasmaDataException("Need three lines : function name + variables list + path to executable"));
             return true;
         }
 
-        String[] variableNames = result[0].split(" ");
+        SOURCE_FILE = result[0];
+
+        String[] variableNames = result[1].split(" ");
         for (String v : variableNames) {
-            VARIDS.add(new IdVariableName(v));
+            VARIDS.add(new GdbExpression(v));
         }
 
-        java.io.File file = new java.io.File(result[1]);
+        java.io.File file = new java.io.File(result[2]);
 
         if (!(file.canRead() && file.isFile() && file.canExecute())) {
             errors.add(new PlasmaDataException("Impossible to read executable"));
             return true;
         }
 
-        filePath = result[1];
+        filePath = result[2];
 
-        //initialState = new MyState(1,1);
+        //initialState = new GdbState(1,1);
 
         return false;
     }
@@ -104,14 +101,15 @@ public class MySimulator extends AbstractModel {
             //gdbMI = new GdbMI(System.out);
             gdbProcess = new GdbProcess(new PrintStream(OutputStream.nullOutputStream()));
             File.file(gdbProcess, Paths.get(filePath));
-            ProgramExecution.start(gdbProcess);
-        } catch (IOException | GDBException e) {
-            e.printStackTrace();
+            Breakpoint.break_(gdbProcess, "*" + SOURCE_FILE);
+            ProgramExecution.run(gdbProcess);
+        } catch (IOException | GdbException e) {
+            throw new PlasmaSimulatorException(e.getMessage());
         }
 
         try {
             trace = new ArrayList<>();
-            trace.add(simulate_step());
+            trace.add(fill_state());
             return getCurrentState();
         } catch (IOException e) {
             throw new PlasmaSimulatorException(e.getMessage());
@@ -128,7 +126,7 @@ public class MySimulator extends AbstractModel {
         return newPath();
     }
 
-    private MyState simulate_step() throws IOException {
+    private GdbState fill_state() throws IOException {
         Map<InterfaceIdentifier, Value> map = new HashMap<>();
         try {
             map.put(PC_ID, new LongValue(Long.parseUnsignedLong(DataManipulation.data_eval_expr(gdbProcess, "$pc").split(" ")[0].substring(2), 16)));
@@ -158,36 +156,28 @@ public class MySimulator extends AbstractModel {
                 map.put(i, new NoValue());
             }
         }
-        return new MyState(map);
+        return new GdbState(map);
     }
 
     @Override
     public InterfaceState simulate() throws PlasmaSimulatorException {
         try {
             ProgramExecution.nexti(gdbProcess);
-            if (File.info_source(gdbProcess).get("file").equals("../csu/libc-start.c")) {
+            Map<String, Object> backtrace = StackManipulation.backtrace(gdbProcess);
+            String currentFunc = (String) backtrace.get("func");
+            if (!SOURCE_FILE.equals(currentFunc)) {
                 throw new PlasmaDeadlockException(getCurrentState(), getTraceLength());
-            } else {
-                trace.add(simulate_step());
-                return getCurrentState();
             }
-
-        } catch (IOException | GDBException e) {
+            trace.add(fill_state());
+            return getCurrentState();
+        } catch (IOException | GdbException e) {
             throw new PlasmaSimulatorException(e.getMessage());
         }
     }
 
     @Override
     public void backtrack() throws PlasmaSimulatorException {
-        //if (trace.size() == 1)
-            throw new PlasmaSimulatorException("Trace is already at initial state: cannot backtrack");
-        /*else {
-            int length = trace.size() - 1;
-            newPath();
-            while (trace.size() < length) {
-                simulate();
-            }
-        }*/
+        throw new PlasmaSimulatorException("Cannot backtrack");
     }
 
     @Override
@@ -213,7 +203,7 @@ public class MySimulator extends AbstractModel {
         res.add(CF_ID);
         res.add(OF_ID);
         res.addAll(VARIDS);
-        return res.toArray(new InterfaceIdentifier[] {});
+        return res.toArray(new InterfaceIdentifier[]{});
     }
 
     @Override

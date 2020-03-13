@@ -7,16 +7,13 @@ import java.io.IOException;
 
 import static be.uclouvain.gdbmiapi.Utils.assertOrThrow;
 
-public class DataManipulation {
-    public static String data_eval_expr(GdbProcess gdbProcess, String expr) throws IOException, GdbException {
-        //TODO -f option
-        String res = gdbProcess.executeGDBCommand("-data-evaluate-expression \"" + StringEscapeUtils.escapeJava(expr) + "\"");
+public class Breakpoint {
+    public static void break_(GdbProcess gdbProcess, String expr) throws IOException, GdbException {
+        String res = gdbProcess.executeGDBCommand("-break-insert \"" + StringEscapeUtils.escapeJava(expr) + "\"");
         MIOutputParser.OutputContext output = ParseMI.parse(res);
 
         assertOrThrow(res, output.result_record() != null);
         assertOrThrow(res, output.result_record().result_class().DONE() != null);
         assertOrThrow(res, output.result_record().result().size() == 1);
-        assertOrThrow(res, output.result_record().result(0).variable().getText().equals("value"));
-        return Utils.extractValue(output.result_record().result(0).value().getText());
     }
 }

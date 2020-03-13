@@ -1,18 +1,23 @@
 package be.uclouvain.gdbmiapi.commands;
 
-import be.uclouvain.gdbmiapi.GDBException;
+import be.uclouvain.gdbmiapi.GdbException;
 import be.uclouvain.gdbmiapi.GdbProcess;
 import be.uclouvain.gdbmiapi.Utils;
 
 import java.io.IOException;
 
 public class ProgramExecution {
-    public static void start(GdbProcess gdbProcess) throws IOException, GDBException {
+    public static void run(GdbProcess gdbProcess) throws IOException, GdbException {
+        String[] res = gdbProcess.executeGDBCommand("-exec-run", 2);
+        Utils.checkDone(res[0]);
+    }
+
+    public static void start(GdbProcess gdbProcess) throws IOException, GdbException {
         String[] res = gdbProcess.executeGDBCommand("-exec-run --start", 2);
         Utils.checkDone(res[0]);
     }
 
-    public static void nexti(GdbProcess gdbProcess) throws IOException, GDBException {
+    public static void nexti(GdbProcess gdbProcess) throws IOException, GdbException {
         nexti(gdbProcess, false);
     }
 
@@ -28,14 +33,14 @@ public class ProgramExecution {
      * @param gdbProcess
      * @param reverse
      * @throws IOException
-     * @throws GDBException
+     * @throws GdbException
      */
-    public static void nexti(GdbProcess gdbProcess, boolean reverse) throws IOException, GDBException {
+    public static void nexti(GdbProcess gdbProcess, boolean reverse) throws IOException, GdbException {
         String[] res = gdbProcess.executeGDBCommand(reverse ? "-exec-next-instruction --reverse" : "-exec-next-instruction", 2);
         Utils.checkDone(res[0]);
     }
 
-    public static void stepi(GdbProcess gdbProcess) throws IOException, GDBException {
+    public static void stepi(GdbProcess gdbProcess) throws IOException, GdbException {
         stepi(gdbProcess, false);
     }
 
@@ -50,9 +55,9 @@ public class ProgramExecution {
      * @param gdbProcess
      * @param reverse
      * @throws IOException
-     * @throws GDBException
+     * @throws GdbException
      */
-    public static void stepi(GdbProcess gdbProcess, boolean reverse) throws IOException, GDBException {
+    public static void stepi(GdbProcess gdbProcess, boolean reverse) throws IOException, GdbException {
         String[] res = gdbProcess.executeGDBCommand(reverse ? "-exec-step-instruction --reverse" : "-exec-step-instruction", 2);
         Utils.checkDone(res[0]);
     }

@@ -8,7 +8,7 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
 import java.io.File;
 
 @PluginImplementation
-public class MySimulatorFactory extends AbstractModelFactory {
+public class GdbSimulatorFactory extends AbstractModelFactory {
 
     private final static String id = "Executable_simulator";
 
@@ -30,17 +30,17 @@ public class MySimulatorFactory extends AbstractModelFactory {
 
     @Override
     public AbstractModel createAbstractModel(String name) {
-        return new MySimulator(name, "", id);
+        return new GdbSimulator(name, "", id);
     }
 
     @Override
     public AbstractModel createAbstractModel(String name, File file) throws PlasmaDataException {
-        return new MySimulator(name, file, id);
+        return new GdbSimulator(name, file, id);
     }
 
     @Override
     public AbstractModel createAbstractModel(String name, String content) {
-        return new MySimulator(name, content, id);
+        return new GdbSimulator(name, content, id);
     }
 
 
