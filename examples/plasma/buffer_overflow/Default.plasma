@@ -2,9 +2,9 @@
 <PlasmaProject name="Default">
   <models>
     <model name="data_0" type="Executable_simulator">
-      <content>main
-x
-../../gdbplasmaplugin/examples/plasma/buffer_overflow/buffer</content>
+      <content>../../gdbplasmaplugin/examples/plasma/buffer_overflow/buffer
+main
+x @ x</content>
     </model>
   </models>
   <requirements>

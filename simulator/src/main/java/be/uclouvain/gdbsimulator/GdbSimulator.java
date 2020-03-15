@@ -17,12 +17,12 @@ import java.util.*;
 
 public class GdbSimulator extends AbstractModel {
 
-    private static GdbExpression PC_ID = new GdbExpression("pc");
-    private static GdbExpression LINE_ID = new GdbExpression("line");
-    private static GdbExpression CF_ID = new GdbExpression("cf");
-    private static GdbExpression OF_ID = new GdbExpression("of");
+    private static GdbExpression PC_ID = new GdbExpression("pc", null);
+    private static GdbExpression LINE_ID = new GdbExpression("line", null);
+    private static GdbExpression CF_ID = new GdbExpression("cf", null);
+    private static GdbExpression OF_ID = new GdbExpression("of", null);
     private static ArrayList<GdbExpression> VARIDS = new ArrayList<>();
-    private static String SOURCE_FILE = "";
+    private static String METHOD = "";
 
     private String filePath = null;
 
@@ -64,28 +64,28 @@ public class GdbSimulator extends AbstractModel {
 
         // Verify model content
         String[] result = content.split(System.lineSeparator());
-        if (result.length != 3) {
-            errors.add(new PlasmaDataException("Need three lines : function name + variables list + path to executable"));
+        if (result.length < 3) {
+            errors.add(new PlasmaDataException("Need at least two lines : path to executable + function name + named expressions list"));
             return true;
         }
 
-        SOURCE_FILE = result[0];
-
-        String[] variableNames = result[1].split(" ");
-        for (String v : variableNames) {
-            VARIDS.add(new GdbExpression(v));
-        }
-
-        java.io.File file = new java.io.File(result[2]);
-
+        java.io.File file = new java.io.File(result[0]);
         if (!(file.canRead() && file.isFile() && file.canExecute())) {
             errors.add(new PlasmaDataException("Impossible to read executable"));
             return true;
         }
+        filePath = result[0];
 
-        filePath = result[2];
+        METHOD = result[1];
 
-        //initialState = new GdbState(1,1);
+        for (int i = 2; i < result.length; i++) {
+            String[] parts = result[i].split(" @ ");
+            if (parts.length != 2) {
+                errors.add(new PlasmaDataException("Watched expression must be written as : 'name' @ 'expr'"));
+                return true;
+            }
+            VARIDS.add(new GdbExpression(parts[0], parts[1]));
+        }
 
         return false;
     }
@@ -101,7 +101,7 @@ public class GdbSimulator extends AbstractModel {
             //gdbMI = new GdbMI(System.out);
             gdbProcess = new GdbProcess(new PrintStream(OutputStream.nullOutputStream()));
             File.file(gdbProcess, Paths.get(filePath));
-            Breakpoint.break_(gdbProcess, "*" + SOURCE_FILE);
+            Breakpoint.break_(gdbProcess, "*" + METHOD);
             ProgramExecution.run(gdbProcess);
         } catch (IOException | GdbException e) {
             throw new PlasmaSimulatorException(e.getMessage());
@@ -148,10 +148,10 @@ public class GdbSimulator extends AbstractModel {
         } catch (Exception e) {
             map.put(OF_ID, new NoValue());
         }
-        for (InterfaceIdentifier i : VARIDS) {
+        for (GdbExpression i : VARIDS) {
             //TODO specific type instead of ValueInt
             try {
-                map.put(i, new IntValue(Integer.parseInt(DataManipulation.data_eval_expr(gdbProcess, i.getName()))));
+                map.put(i, new IntValue(Integer.parseInt(DataManipulation.data_eval_expr(gdbProcess, i.getExpr()))));
             } catch (Exception e) {
                 map.put(i, new NoValue());
             }
@@ -165,7 +165,7 @@ public class GdbSimulator extends AbstractModel {
             ProgramExecution.nexti(gdbProcess);
             Map<String, Object> backtrace = StackManipulation.backtrace(gdbProcess);
             String currentFunc = (String) backtrace.get("func");
-            if (!SOURCE_FILE.equals(currentFunc)) {
+            if (!METHOD.equals(currentFunc)) {
                 throw new PlasmaDeadlockException(getCurrentState(), getTraceLength());
             }
             trace.add(fill_state());

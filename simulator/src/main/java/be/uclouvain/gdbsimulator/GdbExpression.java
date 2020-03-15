@@ -5,9 +5,11 @@ import fr.inria.plasmalab.workflow.data.simulation.InterfaceIdentifier;
 public class GdbExpression implements InterfaceIdentifier {
 
 	String name;
+	String expr;
 
-	public GdbExpression(String name) {
+	public GdbExpression(String name, String expr) {
 		this.name = name;
+		this.expr = expr;
 	}
 	
 	@Override
@@ -18,6 +20,10 @@ public class GdbExpression implements InterfaceIdentifier {
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	public String getExpr() {
+		return expr;
 	}
 
 	@Override

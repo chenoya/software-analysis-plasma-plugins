@@ -2,9 +2,10 @@
 <PlasmaProject name="Default">
   <models>
     <model name="data_0" type="Executable_simulator">
-      <content>main
-x y
-../../gdbplasmaplugin/examples/plasma/integer_overflow/integer</content>
+      <content>../../gdbplasmaplugin/examples/plasma/integer_overflow/integer
+main
+x @ x
+y @ y</content>
     </model>
   </models>
   <requirements>

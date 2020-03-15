@@ -12,5 +12,11 @@
     </modules>
     <packaging>pom</packaging>
 
+    <properties>
+        <plasma-worflow>${project.basedir}/../../Plasma/plasmalab-1.4.4/libs/fr.inria.plasmalab.workflow-1.4.4.jar</plasma-worflow>
+        <plasma-jspf>${project.basedir}/../../Plasma/plasmalab-1.4.4/libs/jspf.core-1.0.2.jar</plasma-jspf>
+        <plasma-plugin-folder>${project.basedir}/../../Plasma/plasmalab-1.4.4/plugins</plasma-plugin-folder>
+        <encoding>UTF-8</encoding>
+    </properties>
 
 </project>
