@@ -1,4 +1,4 @@
-package be.uclouvain.gdbsimulator;
+package be.uclouvain.gdbsimulator.value;
 
 public class IntValue implements Value<Integer> {
     private Integer content;

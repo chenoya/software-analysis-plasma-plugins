@@ -4,6 +4,7 @@ import be.uclouvain.gdbmiapi.GdbException;
 import be.uclouvain.gdbmiapi.GdbProcess;
 import be.uclouvain.gdbmiapi.commands.*;
 import be.uclouvain.gdbmiapi.commands.File;
+import be.uclouvain.gdbsimulator.value.*;
 import fr.inria.plasmalab.workflow.data.AbstractModel;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceIdentifier;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceState;
@@ -17,12 +18,42 @@ import java.util.*;
 
 public class GdbSimulator extends AbstractModel {
 
-    private static GdbExpression PC_ID = new GdbExpression("pc", null);
-    private static GdbExpression LINE_ID = new GdbExpression("line", null);
-    private static GdbExpression CF_ID = new GdbExpression("cf", null);
-    private static GdbExpression OF_ID = new GdbExpression("of", null);
-    private static ArrayList<GdbExpression> VARIDS = new ArrayList<>();
-    private static String METHOD = "";
+    private static GdbExpression PC_ID = new GdbExpression("pc", (g) -> {
+        try {
+            return new LongValue(Long.parseUnsignedLong(DataManipulation.data_eval_expr(g, "$pc").split(" ")[0].substring(2), 16));
+        } catch (Exception e) {
+            System.err.println("Can not evaluate $pc : " + e.getMessage());
+            return new NoValue();
+        }
+    });
+    private static GdbExpression LINE_ID = new GdbExpression("line", (g) -> {
+        try {
+            return new LongValue((Long) File.info_source(g).get("line"));
+        } catch (Exception e) {
+            System.err.println("Can not evaluate line number : " + e.getMessage());
+            return new NoValue();
+        }
+    });
+    private static GdbExpression CF_ID = new GdbExpression("cf", (g) -> {
+        try {
+            return new BoolValue(DataManipulation.data_eval_expr(g, "$eflags").contains("CF"));
+        } catch (Exception e) {
+            System.err.println("Can not evaluate flags : " + e.getMessage());
+            return new NoValue();
+        }
+    });
+    private static GdbExpression OF_ID = new GdbExpression("of", (g) -> {
+        try {
+            return new BoolValue(DataManipulation.data_eval_expr(g, "$eflags").contains("OF"));
+        } catch (Exception e) {
+            System.err.println("Can not evaluate flags : " + e.getMessage());
+            return new NoValue();
+        }
+    });
+
+    private static ArrayList<GdbExpression> exprFromSimu = new ArrayList<>();
+    private static ArrayList<GdbExpression> exprFromCheck = new ArrayList<>();
+    private static String method = "";
 
     private String filePath = null;
 
@@ -60,12 +91,12 @@ public class GdbSimulator extends AbstractModel {
     public boolean checkForErrors() {
         // Empty from previous errors
         errors.clear();
-        VARIDS.clear();
+        exprFromSimu.clear();
 
         // Verify model content
         String[] result = content.split(System.lineSeparator());
-        if (result.length < 3) {
-            errors.add(new PlasmaDataException("Need at least two lines : path to executable + function name + named expressions list"));
+        if (result.length < 2) {
+            errors.add(new PlasmaDataException("Need at least two lines : path to executable + function name + named expressions list (optional)"));
             return true;
         }
 
@@ -76,7 +107,7 @@ public class GdbSimulator extends AbstractModel {
         }
         filePath = result[0];
 
-        METHOD = result[1];
+        method = result[1];
 
         for (int i = 2; i < result.length; i++) {
             String[] parts = result[i].split(" @ ");
@@ -84,10 +115,17 @@ public class GdbSimulator extends AbstractModel {
                 errors.add(new PlasmaDataException("Watched expression must be written as : 'name' @ 'expr'"));
                 return true;
             }
-            VARIDS.add(new GdbExpression(parts[0], parts[1]));
+            exprFromSimu.add(new GdbExpression(parts[0], GdbExpression.makeDoubleParser(parts[1])));
         }
 
         return false;
+    }
+
+    @SuppressWarnings("unused")
+    //Used through reflexion from the Checker.
+    public void addGdbExpressions(Map<String, String> pairs) {
+        exprFromCheck.clear();
+        pairs.forEach((name, expr) -> exprFromCheck.add(new GdbExpression(name, GdbExpression.makeBoolParser(expr))));
     }
 
     @Override
@@ -101,19 +139,15 @@ public class GdbSimulator extends AbstractModel {
             //gdbMI = new GdbMI(System.out);
             gdbProcess = new GdbProcess(new PrintStream(OutputStream.nullOutputStream()));
             File.file(gdbProcess, Paths.get(filePath));
-            Breakpoint.break_(gdbProcess, "*" + METHOD);
+            Breakpoint.break_(gdbProcess, "*" + method);
             ProgramExecution.run(gdbProcess);
         } catch (IOException | GdbException e) {
             throw new PlasmaSimulatorException(e.getMessage());
         }
 
-        try {
-            trace = new ArrayList<>();
-            trace.add(fill_state());
-            return getCurrentState();
-        } catch (IOException e) {
-            throw new PlasmaSimulatorException(e.getMessage());
-        }
+        trace = new ArrayList<>();
+        trace.add(fill_state());
+        return getCurrentState();
     }
 
     @Override
@@ -126,35 +160,17 @@ public class GdbSimulator extends AbstractModel {
         return newPath();
     }
 
-    private GdbState fill_state() throws IOException {
+    private GdbState fill_state() {
         Map<InterfaceIdentifier, Value> map = new HashMap<>();
-        try {
-            map.put(PC_ID, new LongValue(Long.parseUnsignedLong(DataManipulation.data_eval_expr(gdbProcess, "$pc").split(" ")[0].substring(2), 16)));
-        } catch (Exception e) {
-            map.put(PC_ID, new NoValue());
+        map.put(PC_ID, PC_ID.getParser().apply(gdbProcess));
+        map.put(LINE_ID, LINE_ID.getParser().apply(gdbProcess));
+        map.put(CF_ID, CF_ID.getParser().apply(gdbProcess));
+        map.put(OF_ID, OF_ID.getParser().apply(gdbProcess));
+        for (GdbExpression i : exprFromSimu) {
+            map.put(i, i.getParser().apply(gdbProcess));
         }
-        try {
-            map.put(LINE_ID, new LongValue((Long) File.info_source(gdbProcess).get("line")));
-        } catch (Exception e) {
-            map.put(LINE_ID, new NoValue());
-        }
-        try {
-            map.put(CF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("CF") ? 1 : 0));
-        } catch (Exception e) {
-            map.put(CF_ID, new NoValue());
-        }
-        try {
-            map.put(OF_ID, new IntValue(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("OF") ? 1 : 0));
-        } catch (Exception e) {
-            map.put(OF_ID, new NoValue());
-        }
-        for (GdbExpression i : VARIDS) {
-            //TODO specific type instead of ValueInt
-            try {
-                map.put(i, new IntValue(Integer.parseInt(DataManipulation.data_eval_expr(gdbProcess, i.getExpr()))));
-            } catch (Exception e) {
-                map.put(i, new NoValue());
-            }
+        for (GdbExpression i : exprFromCheck) {
+            map.put(i, i.getParser().apply(gdbProcess));
         }
         return new GdbState(map);
     }
@@ -165,7 +181,7 @@ public class GdbSimulator extends AbstractModel {
             ProgramExecution.nexti(gdbProcess);
             Map<String, Object> backtrace = StackManipulation.backtrace(gdbProcess);
             String currentFunc = (String) backtrace.get("func");
-            if (!METHOD.equals(currentFunc)) {
+            if (!method.equals(currentFunc)) {
                 throw new PlasmaDeadlockException(getCurrentState(), getTraceLength());
             }
             trace.add(fill_state());
@@ -197,12 +213,12 @@ public class GdbSimulator extends AbstractModel {
 
     @Override
     public InterfaceIdentifier[] getHeaders() {
-        ArrayList<InterfaceIdentifier> res = new ArrayList<>(VARIDS.size() + 2);
+        ArrayList<InterfaceIdentifier> res = new ArrayList<>(exprFromSimu.size() + 4);
         res.add(PC_ID);
         res.add(LINE_ID);
         res.add(CF_ID);
         res.add(OF_ID);
-        res.addAll(VARIDS);
+        res.addAll(exprFromSimu);
         return res.toArray(new InterfaceIdentifier[]{});
     }
 
@@ -213,7 +229,10 @@ public class GdbSimulator extends AbstractModel {
         mymap.put(LINE_ID.getName(), LINE_ID);
         mymap.put(CF_ID.getName(), CF_ID);
         mymap.put(OF_ID.getName(), OF_ID);
-        for (InterfaceIdentifier i : VARIDS) {
+        for (InterfaceIdentifier i : exprFromSimu) {
+            mymap.put(i.getName(), i);
+        }
+        for (InterfaceIdentifier i : exprFromCheck) {
             mymap.put(i.getName(), i);
         }
         return mymap;
@@ -226,7 +245,6 @@ public class GdbSimulator extends AbstractModel {
 
     @Override
     public List<InterfaceIdentifier> getStateProperties() {
-        // TODO Auto-generated method stub
         return null;
     }
 

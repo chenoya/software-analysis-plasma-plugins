@@ -1,5 +1,6 @@
 package be.uclouvain.gdbsimulator;
 
+import be.uclouvain.gdbsimulator.value.Value;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceIdentifier;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceState;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceTransition;
@@ -38,8 +39,6 @@ public class GdbState implements InterfaceState {
 	@Override
 	public InterfaceState cloneState() {
 		return null;
-		//TODO deep copy ?
-		//return new GdbState(varContentII);
 	}
 
 	@Override
@@ -51,8 +50,13 @@ public class GdbState implements InterfaceState {
     public Double getValueOf(InterfaceIdentifier id) throws PlasmaSimulatorException {
 		if (varContentII.containsKey(id))
 			return varContentII.get(id).toDouble();
-		else
-			throw new PlasmaSimulatorException("Unknown identifier: " + id.getName());
+		else {
+			if (id == null)
+				throw new PlasmaSimulatorException("Unknown identifier: null");
+			else
+				throw new PlasmaSimulatorException("Unknown identifier: " + id.getName());
+		}
+
     }
      
     @Override

@@ -1,4 +1,4 @@
-package be.uclouvain.gdbsimulator;
+package be.uclouvain.gdbsimulator.value;
 
 public interface Value<T> {
     T getValue();

@@ -9,7 +9,6 @@ import static be.uclouvain.gdbmiapi.Utils.assertOrThrow;
 
 public class DataManipulation {
     public static String data_eval_expr(GdbProcess gdbProcess, String expr) throws IOException, GdbException {
-        //TODO -f option
         String res = gdbProcess.executeGDBCommand("-data-evaluate-expression \"" + StringEscapeUtils.escapeJava(expr) + "\"");
         MIOutputParser.OutputContext output = ParseMI.parse(res);
 

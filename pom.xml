@@ -9,6 +9,7 @@
     <version>1.0.0</version>
     <modules>
         <module>simulator</module>
+        <module>requirementchecker</module>
     </modules>
     <packaging>pom</packaging>
 
