@@ -5,6 +5,7 @@ import fr.inria.plasmalab.workflow.data.simulation.InterfaceIdentifier;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceState;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceTransition;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaSimulatorException;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -84,4 +85,20 @@ public class GdbState implements InterfaceState {
 		return res;
 	}
 
+    @Override
+    public String toString() {
+	    StringBuilder s = new StringBuilder();
+	    s.append("<state>\n");
+	    varContentII.forEach((i, v) -> s.append("    <expr name=\"")
+                .append(i.getName())
+				.append("\" expr=\"")
+				.append(StringEscapeUtils.escapeJava(((GdbExpression) i).getExpr()))
+                .append("\" type=\"")
+                .append(v.getClass().getSimpleName())
+                .append("\">")
+                .append(v.getValue())
+                .append("</expr>\n"));
+	    s.append("</state>\n");
+        return s.toString();
+    }
 }

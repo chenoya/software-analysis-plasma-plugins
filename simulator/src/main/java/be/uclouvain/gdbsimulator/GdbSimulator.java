@@ -18,36 +18,36 @@ import java.util.*;
 
 public class GdbSimulator extends AbstractModel {
 
-    private static GdbExpression PC_ID = new GdbExpression("pc", (g) -> {
+    private static GdbExpression PC_ID = new GdbExpression("pc", "$pc", (g) -> {
         try {
             return new LongValue(Long.parseUnsignedLong(DataManipulation.data_eval_expr(g, "$pc").split(" ")[0].substring(2), 16));
         } catch (Exception e) {
             System.err.println("Can not evaluate $pc : " + e.getMessage());
-            return new NoValue();
+            return new NoValue(e.getMessage());
         }
     });
-    private static GdbExpression LINE_ID = new GdbExpression("line", (g) -> {
+    private static GdbExpression LINE_ID = new GdbExpression("line", "line", (g) -> {
         try {
             return new LongValue((Long) File.info_source(g).get("line"));
         } catch (Exception e) {
             System.err.println("Can not evaluate line number : " + e.getMessage());
-            return new NoValue();
+            return new NoValue(e.getMessage());
         }
     });
-    private static GdbExpression CF_ID = new GdbExpression("cf", (g) -> {
+    private static GdbExpression CF_ID = new GdbExpression("CF", "CF", (g) -> {
         try {
             return new BoolValue(DataManipulation.data_eval_expr(g, "$eflags").contains("CF"));
         } catch (Exception e) {
             System.err.println("Can not evaluate flags : " + e.getMessage());
-            return new NoValue();
+            return new NoValue(e.getMessage());
         }
     });
-    private static GdbExpression OF_ID = new GdbExpression("of", (g) -> {
+    private static GdbExpression OF_ID = new GdbExpression("OF", "OF", (g) -> {
         try {
             return new BoolValue(DataManipulation.data_eval_expr(g, "$eflags").contains("OF"));
         } catch (Exception e) {
             System.err.println("Can not evaluate flags : " + e.getMessage());
-            return new NoValue();
+            return new NoValue(e.getMessage());
         }
     });
 
@@ -115,7 +115,7 @@ public class GdbSimulator extends AbstractModel {
                 errors.add(new PlasmaDataException("Watched expression must be written as : 'name' @ 'expr'"));
                 return true;
             }
-            exprFromSimu.add(new GdbExpression(parts[0], GdbExpression.makeDoubleParser(parts[1])));
+            exprFromSimu.add(new GdbExpression(parts[0], parts[1], GdbExpression.makeDoubleParser(parts[1])));
         }
 
         return false;
@@ -125,7 +125,7 @@ public class GdbSimulator extends AbstractModel {
     //Used through reflexion from the Checker.
     public void addGdbExpressions(Map<String, String> pairs) {
         exprFromCheck.clear();
-        pairs.forEach((name, expr) -> exprFromCheck.add(new GdbExpression(name, GdbExpression.makeBoolParser(expr))));
+        pairs.forEach((name, expr) -> exprFromCheck.add(new GdbExpression(name, expr, GdbExpression.makeBoolParser(expr))));
     }
 
     @Override

@@ -19,6 +19,13 @@
 
     <dependencies>
 
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.8</version>
+        </dependency>
+
         <!-- not included in the jar -->
         <dependency>
             <groupId>jspf</groupId>

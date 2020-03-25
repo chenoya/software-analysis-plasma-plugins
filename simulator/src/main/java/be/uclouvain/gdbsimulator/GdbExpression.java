@@ -15,10 +15,12 @@ import java.util.function.Function;
 public class GdbExpression implements InterfaceIdentifier {
 
     private String name;
+    private String expr;
     private Function<GdbProcess, Value> parser;
 
-    public GdbExpression(String name, Function<GdbProcess, Value> parser) {
+    public GdbExpression(String name, String expr, Function<GdbProcess, Value> parser) {
         this.name = name;
+        this.expr = expr;
         this.parser = parser;
     }
 
@@ -31,10 +33,10 @@ public class GdbExpression implements InterfaceIdentifier {
                 else if (s.equals("0"))
                     return new BoolValue(false);
                 else
-                    return new NoValue();
+                    return new NoValue("Not a boolean expression");
             } catch (GdbException | IOException e) {
                 System.err.println("Can not evaluate \"" + expr + "\" : " + e.getMessage());
-                return new NoValue();
+                return new NoValue(e.getMessage());
             }
         };
     }
@@ -45,7 +47,7 @@ public class GdbExpression implements InterfaceIdentifier {
                 return new DoubleValue(Double.parseDouble(DataManipulation.data_eval_expr(g, expr)));
             } catch (NumberFormatException | GdbException | IOException e) {
                 System.err.println("Can not evaluate \"" + expr + "\" : " + e.getMessage());
-                return new NoValue();
+                return new NoValue(e.getMessage());
             }
         };
     }
@@ -74,4 +76,7 @@ public class GdbExpression implements InterfaceIdentifier {
         return this.name.hashCode();
     }
 
+    public String getExpr() {
+        return expr;
+    }
 }

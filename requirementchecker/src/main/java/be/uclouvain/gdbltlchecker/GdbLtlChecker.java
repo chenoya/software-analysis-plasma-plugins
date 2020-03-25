@@ -5,7 +5,6 @@ import fr.inria.plasmalab.workflow.data.AbstractModel;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceState;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaCheckerException;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaDataException;
-import fr.inria.plasmalab.workflow.exceptions.PlasmaSimulatorException;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -47,13 +46,7 @@ public class GdbLtlChecker extends BLTLRequirement {
         if (res != 1.0) {
             // print trace
             for (InterfaceState interfaceState : model.getTrace()) {
-                for (String interfaceIdentifier : model.getIdentifiers().keySet()) {
-                    try {
-                        System.out.println(interfaceIdentifier + " = " + interfaceState.getValueOf(interfaceIdentifier));
-                    } catch (PlasmaSimulatorException e) {
-                        System.out.println(interfaceIdentifier + " = " + e.getMessage());
-                    }
-                }
+                System.out.println(interfaceState);
                 System.out.println("----------");
             }
         }
