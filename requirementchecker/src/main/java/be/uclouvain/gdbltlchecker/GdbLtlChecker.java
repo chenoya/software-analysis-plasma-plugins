@@ -2,27 +2,51 @@ package be.uclouvain.gdbltlchecker;
 
 import fr.inria.plasmalab.bltl.BLTLRequirement;
 import fr.inria.plasmalab.workflow.data.AbstractModel;
+import fr.inria.plasmalab.workflow.data.AbstractRequirement;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceState;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaCheckerException;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaDataException;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class GdbLtlChecker extends BLTLRequirement {
+public class GdbLtlChecker extends AbstractRequirement {
 
     private Map<String, String> gdbExpr = new HashMap<>();
     private boolean parsed = false;
+    private BLTLRequirement bltlRequirement;
+    private AbstractModel model;
 
     public GdbLtlChecker(String name, File file, String id) throws PlasmaDataException {
-        super(name, file, id);
+        this.name = name;
+        this.id = id;
+        try {
+            this.content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new PlasmaDataException(e);
+        }
+        this.origin = file;
+        this.errors = new ArrayList<>(0);
+
+        bltlRequirement = new BLTLRequirement(name, "", id);
     }
 
     public GdbLtlChecker(String name, String content, String id) {
-        super(name, content, id);
+        this.name = name;
+        this.id = id;
+        this.content = content;
+        this.origin = null;
+        this.errors = new ArrayList<>(0);
+
+        bltlRequirement = new BLTLRequirement(name, "", id);
     }
 
     private void addExpressions(AbstractModel model) {
@@ -37,12 +61,13 @@ public class GdbLtlChecker extends BLTLRequirement {
     @Override
     public void setModel(AbstractModel abstractModel) {
         addExpressions(abstractModel);
-        super.setModel(abstractModel);
+        this.model = abstractModel;
+        bltlRequirement.setModel(abstractModel);
     }
 
     @Override
     public Double check(InterfaceState path) throws PlasmaCheckerException {
-        Double res = super.check(path);
+        Double res = bltlRequirement.check(path);
         if (res != 1.0) {
             // print trace
             for (InterfaceState interfaceState : model.getTrace()) {
@@ -53,20 +78,20 @@ public class GdbLtlChecker extends BLTLRequirement {
         return res;
     }
 
-    /*@Override
+    @Override
     public Double check(int i, InterfaceState interfaceState) throws PlasmaCheckerException {
-        return super.check(i, interfaceState);
+        return bltlRequirement.check(i, interfaceState);
     }
 
     @Override
     public Double check(String s, double v, InterfaceState interfaceState) throws PlasmaCheckerException {
-        return super.check(s, v, interfaceState);
+        return bltlRequirement.check(s, v, interfaceState);
     }
 
     @Override
     public List<InterfaceState> getLastTrace() {
-        return super.getLastTrace();
-    }*/
+        return bltlRequirement.getLastTrace();
+    }
 
     @Override
     public boolean checkForErrors() {
@@ -74,8 +99,8 @@ public class GdbLtlChecker extends BLTLRequirement {
             errors.clear();
             gdbExpr.clear();
             int nbId = 0;
-            content = " " + content + " ";
-            String[] parts = content.split("\\$");
+            String content2 = " " + this.content + " ";
+            String[] parts = content2.split("\\$");
             if ((parts.length - 1) % 2 != 0) {
                 errors.add(new PlasmaDataException("Unbalanced GdbExpression bounds"));
                 return true;
@@ -90,21 +115,23 @@ public class GdbLtlChecker extends BLTLRequirement {
                     nbId++;
                 }
             }
-            this.content = newContent.toString();
-            this.content = this.content.substring(1, this.content.length()-1);
-            this.parsed = true;
+            bltlRequirement.updateContent(newContent.substring(1, newContent.length()-1));
             if (this.model != null) {
                 addExpressions(this.model);
             }
+            this.parsed = true;
 
         }
-        return super.checkForErrors();
+        boolean res = bltlRequirement.checkForErrors();
+        this.errors.addAll(bltlRequirement.getErrors());
+        return res;
     }
 
     @Override
     public void updateContent(String newContent) {
         this.parsed = false;
-        super.updateContent(newContent);
+        this.content = newContent;
+        bltlRequirement.updateContent("");
     }
 
     /*@Override
