@@ -86,9 +86,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <appendAssemblyId>false</appendAssemblyId>
                     <outputDirectory>${plasma-plugin-folder}</outputDirectory>
-                    <finalName>gdbsimulator</finalName>
                 </configuration>
                 <executions>
                     <execution>

@@ -136,10 +136,11 @@ public class GdbSimulator extends AbstractModel {
     @Override
     public InterfaceState newPath() throws PlasmaSimulatorException {
         try {
-            //gdbMI = new GdbMI(System.out);
-            gdbProcess = new GdbProcess(new PrintStream(OutputStream.nullOutputStream()));
-            File.file(gdbProcess, Paths.get(filePath));
-            Breakpoint.break_(gdbProcess, "*" + method);
+            if (gdbProcess == null) {
+                gdbProcess = new GdbProcess(new PrintStream(OutputStream.nullOutputStream()));
+                File.file(gdbProcess, Paths.get(filePath));
+                Breakpoint.break_(gdbProcess, "*" + method);
+            }
             ProgramExecution.run(gdbProcess);
         } catch (IOException | GdbException e) {
             throw new PlasmaSimulatorException(e.getMessage());
