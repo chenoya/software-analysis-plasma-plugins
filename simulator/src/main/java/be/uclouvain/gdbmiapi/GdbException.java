@@ -3,9 +3,7 @@ package be.uclouvain.gdbmiapi;
 public class GdbException extends Exception {
     public GdbException(String message) {
         super(parseMessage(message));
-        //TODO parse error
     }
-
 
     private static String parseMessage(String msg) {
         try {
@@ -22,6 +20,5 @@ public class GdbException extends Exception {
             return msg;
         }
     }
-
 
 }

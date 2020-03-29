@@ -16,15 +16,15 @@ public class GdbExpression implements InterfaceIdentifier {
 
     private String name;
     private String expr;
-    private Function<GdbProcess, Value> parser;
+    private Function<GdbProcess, Value<?>> parser;
 
-    public GdbExpression(String name, String expr, Function<GdbProcess, Value> parser) {
+    public GdbExpression(String name, String expr, Function<GdbProcess, Value<?>> parser) {
         this.name = name;
         this.expr = expr;
         this.parser = parser;
     }
 
-    public static Function<GdbProcess, Value> makeBoolParser(String expr) {
+    public static Function<GdbProcess, Value<?>> makeBoolParser(String expr) {
         return (g) -> {
             try {
                 String s = DataManipulation.data_eval_expr(g, expr);
@@ -41,7 +41,7 @@ public class GdbExpression implements InterfaceIdentifier {
         };
     }
 
-    public static Function<GdbProcess, Value> makeDoubleParser(String expr) {
+    public static Function<GdbProcess, Value<?>> makeDoubleParser(String expr) {
         return (g) -> {
             try {
                 return new DoubleValue(Double.parseDouble(DataManipulation.data_eval_expr(g, expr)));
@@ -67,7 +67,7 @@ public class GdbExpression implements InterfaceIdentifier {
         return false;
     }
 
-    public Function<GdbProcess, Value> getParser() {
+    public Function<GdbProcess, Value<?>> getParser() {
         return parser;
     }
 

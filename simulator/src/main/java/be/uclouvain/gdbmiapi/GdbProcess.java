@@ -128,10 +128,6 @@ public class GdbProcess {
         return res;
     }
 
-    private GdbException parseError(String res) {
-        return new GdbException(res);
-    }
-
     private void disableAsyncExec() throws IOException, GdbException {
         String res = executeGDBCommand("-gdb-set mi-async off");
         Utils.checkDone(res);

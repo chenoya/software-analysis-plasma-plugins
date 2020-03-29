@@ -13,6 +13,7 @@ import fr.inria.plasmalab.workflow.exceptions.PlasmaDeadlockException;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaSimulatorException;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -28,7 +29,7 @@ public class GdbSimulator extends AbstractModel {
     });
     private static GdbExpression LINE_ID = new GdbExpression("line", "line", (g) -> {
         try {
-            return new LongValue((Long) File.info_source(g).get("line"));
+            return new LongValue(File.info_source(g).getLine());
         } catch (Exception e) {
             System.err.println("Can not evaluate line number : " + e.getMessage());
             return new NoValue(e.getMessage());
@@ -47,6 +48,20 @@ public class GdbSimulator extends AbstractModel {
             return new BoolValue(DataManipulation.data_eval_expr(g, "$eflags").contains("OF"));
         } catch (Exception e) {
             System.err.println("Can not evaluate flags : " + e.getMessage());
+            return new NoValue(e.getMessage());
+        }
+    });
+    private static byte[] stackContent;
+    private static long stackStart;
+    private static long stackEnd;
+    private static GdbExpression STACK_MODIFIED = new GdbExpression("STACK_M", "STACK_M", (g) -> {
+        try {
+            byte[] newStack = DataManipulation.data_read_memory(g, stackStart, stackEnd-stackStart);
+            boolean changed = stackContent != null && Arrays.compare(stackContent, newStack) != 0;
+            stackContent = newStack;
+            return new BoolValue(changed);
+        } catch (Exception e) {
+            System.err.println("Can not evaluate stack content : " + e.getMessage());
             return new NoValue(e.getMessage());
         }
     });
@@ -142,6 +157,28 @@ public class GdbSimulator extends AbstractModel {
                 Breakpoint.break_(gdbProcess, "*" + method);
             }
             ProgramExecution.run(gdbProcess);
+            String pid = DataManipulation.data_eval_expr(gdbProcess, "(int) getpid()");
+            final Long[] start = {null};
+            final Long[] end = {null};
+            Files.lines(Paths.get("/proc", pid, "maps")).forEach((line) -> {
+                if (line.contains("[stack]")) {
+                    String[] s = line.split("[ -]");
+                    try {
+                        start[0] = Long.parseUnsignedLong(s[0], 16);
+                        end[0] = Long.parseUnsignedLong(s[1], 16);
+                    } catch (IndexOutOfBoundsException | NumberFormatException ignored) {
+                    }
+                }
+            });
+            long current = Long.parseUnsignedLong(DataManipulation.data_eval_expr(gdbProcess, "$sp").substring(2), 16);
+            if (start[0] == null || end[0] == null) {
+                throw new PlasmaSimulatorException("Can not get stack bounds from system");
+            }
+            if (current < start[0] || current >= end[0]) {
+                throw new PlasmaSimulatorException("Stack pointer out of stack bounds");
+            }
+            stackStart = start[0];
+            stackEnd = current;
         } catch (IOException | GdbException e) {
             throw new PlasmaSimulatorException(e.getMessage());
         }
@@ -162,11 +199,12 @@ public class GdbSimulator extends AbstractModel {
     }
 
     private GdbState fill_state() {
-        Map<InterfaceIdentifier, Value> map = new HashMap<>();
+        Map<InterfaceIdentifier, Value<?>> map = new HashMap<>();
         map.put(PC_ID, PC_ID.getParser().apply(gdbProcess));
         map.put(LINE_ID, LINE_ID.getParser().apply(gdbProcess));
         map.put(CF_ID, CF_ID.getParser().apply(gdbProcess));
         map.put(OF_ID, OF_ID.getParser().apply(gdbProcess));
+        map.put(STACK_MODIFIED, STACK_MODIFIED.getParser().apply(gdbProcess));
         for (GdbExpression i : exprFromSimu) {
             map.put(i, i.getParser().apply(gdbProcess));
         }
@@ -180,8 +218,8 @@ public class GdbSimulator extends AbstractModel {
     public InterfaceState simulate() throws PlasmaSimulatorException {
         try {
             ProgramExecution.nexti(gdbProcess);
-            Map<String, Object> backtrace = StackManipulation.backtrace(gdbProcess);
-            String currentFunc = (String) backtrace.get("func");
+            StackManipulation.Frame[] backtrace = StackManipulation.backtrace(gdbProcess);
+            String currentFunc = backtrace[0].getFunc();
             if (!method.equals(currentFunc)) {
                 throw new PlasmaDeadlockException(getCurrentState(), getTraceLength());
             }
@@ -219,17 +257,19 @@ public class GdbSimulator extends AbstractModel {
         res.add(LINE_ID);
         res.add(CF_ID);
         res.add(OF_ID);
+        res.add(STACK_MODIFIED);
         res.addAll(exprFromSimu);
         return res.toArray(new InterfaceIdentifier[]{});
     }
 
     @Override
     public Map<String, InterfaceIdentifier> getIdentifiers() {
-        Map<String, InterfaceIdentifier> mymap = new HashMap<String, InterfaceIdentifier>();
+        Map<String, InterfaceIdentifier> mymap = new HashMap<>();
         mymap.put(PC_ID.getName(), PC_ID);
         mymap.put(LINE_ID.getName(), LINE_ID);
         mymap.put(CF_ID.getName(), CF_ID);
         mymap.put(OF_ID.getName(), OF_ID);
+        mymap.put(STACK_MODIFIED.getName(), STACK_MODIFIED);
         for (InterfaceIdentifier i : exprFromSimu) {
             mymap.put(i.getName(), i);
         }

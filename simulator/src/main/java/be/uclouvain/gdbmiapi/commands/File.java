@@ -5,8 +5,6 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
 import static be.uclouvain.gdbmiapi.Utils.assertOrThrow;
 
@@ -45,6 +43,36 @@ public class File {
         Utils.checkDone(res);
     }
 
+    public static class InfoSourceOutput {
+        private long line;
+        private String file;
+        private String fullName;
+        private boolean macroInfo;
+
+        public InfoSourceOutput(long line, String file, String fullName, boolean macroInfo) {
+            this.line = line;
+            this.file = file;
+            this.fullName = fullName;
+            this.macroInfo = macroInfo;
+        }
+
+        public long getLine() {
+            return line;
+        }
+
+        public String getFile() {
+            return file;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public boolean getMacroInfo() {
+            return macroInfo;
+        }
+    }
+
     /**
      * List the line number, the current source file, and the absolute path to the current source file for the current
      * executable. The macro information field has a value of ‘1’ or ‘0’ depending on whether or not the file includes
@@ -55,7 +83,7 @@ public class File {
      * @throws IOException
      * @throws GdbException
      */
-    public static Map<String, Object> info_source(GdbProcess gdbProcess) throws IOException, GdbException {
+    public static InfoSourceOutput info_source(GdbProcess gdbProcess) throws IOException, GdbException {
         String res = gdbProcess.executeGDBCommand("-file-list-exec-source-file");
         MIOutputParser.OutputContext output = ParseMI.parse(res);
         assertOrThrow(res, output.result_record() != null);
@@ -65,16 +93,12 @@ public class File {
         assertOrThrow(res, output.result_record().result(1).variable().getText().equals("file"));
         assertOrThrow(res, output.result_record().result(2).variable().getText().equals("fullname"));
         assertOrThrow(res, output.result_record().result(3).variable().getText().equals("macro-info"));
-        Map<String, Object> fields = new HashMap<>();
-        fields.put(output.result_record().result(0).variable().getText(),
-                Long.parseUnsignedLong(Utils.extractValue(output.result_record().result(0).value().getText())));
-        fields.put(output.result_record().result(1).variable().getText(),
-                Utils.extractValue(output.result_record().result(1).value().getText()));
-        fields.put(output.result_record().result(2).variable().getText(),
-                Utils.extractValue(output.result_record().result(2).value().getText()));
-        fields.put(output.result_record().result(3).variable().getText(),
-                Boolean.parseBoolean(Utils.extractValue(output.result_record().result(3).value().getText())));
-        return fields;
+        return new InfoSourceOutput(
+                Long.parseUnsignedLong(Utils.extractValue(output.result_record().result(0).value().getText())),
+                Utils.extractValue(output.result_record().result(1).value().getText()),
+                Utils.extractValue(output.result_record().result(2).value().getText()),
+                Boolean.parseBoolean(Utils.extractValue(output.result_record().result(3).value().getText()))
+        );
     }
 
 }

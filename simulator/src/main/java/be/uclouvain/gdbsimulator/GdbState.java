@@ -12,15 +12,13 @@ import java.util.Map;
 
 public class GdbState implements InterfaceState {
 
-	private Map<InterfaceIdentifier, Value> varContentII;
-	private Map<String, Value> varContentStr;
+	private Map<InterfaceIdentifier, Value<?>> varContentII;
+	private Map<String, Value<?>> varContentStr;
 	
-	public GdbState(Map<InterfaceIdentifier, Value> variablesContent) {
+	public GdbState(Map<InterfaceIdentifier, Value<?>> variablesContent) {
 		this.varContentII = variablesContent;
 		varContentStr = new HashMap<>();
-		variablesContent.forEach((i, v) -> {
-			varContentStr.put(i.getName(), v);
-		});
+		variablesContent.forEach((i, v) -> varContentStr.put(i.getName(), v));
 
 		/*this.pc = pc;
 		this.line = line;
