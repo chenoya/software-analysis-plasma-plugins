@@ -68,9 +68,9 @@ public class GdbSimulator extends AbstractModel {
 
     private static ArrayList<GdbExpression> exprFromSimu = new ArrayList<>();
     private static ArrayList<GdbExpression> exprFromCheck = new ArrayList<>();
-    private static String method = "";
 
     private String filePath = null;
+    private String method = "";
 
     private GdbProcess gdbProcess = null;
 
@@ -99,6 +99,11 @@ public class GdbSimulator extends AbstractModel {
         } catch (IOException e) {
             throw new PlasmaDataException("Cannot read model file", e);
         }
+    }
+
+    public GdbSimulator(java.io.File file, String method) {
+        this.filePath = file.getPath();
+        this.method = method;
     }
 
 
@@ -157,6 +162,7 @@ public class GdbSimulator extends AbstractModel {
                 Breakpoint.break_(gdbProcess, "*" + method);
             }
             ProgramExecution.run(gdbProcess);
+            stackContent = null;
             String pid = DataManipulation.data_eval_expr(gdbProcess, "(int) getpid()");
             final Long[] start = {null};
             final Long[] end = {null};
@@ -177,8 +183,8 @@ public class GdbSimulator extends AbstractModel {
             if (current < start[0] || current >= end[0]) {
                 throw new PlasmaSimulatorException("Stack pointer out of stack bounds");
             }
-            stackStart = start[0];
-            stackEnd = current;
+            stackStart = current;
+            stackEnd = end[0];
         } catch (IOException | GdbException e) {
             throw new PlasmaSimulatorException(e.getMessage());
         }
@@ -304,5 +310,11 @@ public class GdbSimulator extends AbstractModel {
         return false;
     }
 
+    public String getFilePath() {
+        return filePath;
+    }
 
+    public String getMethod() {
+        return method;
+    }
 }
