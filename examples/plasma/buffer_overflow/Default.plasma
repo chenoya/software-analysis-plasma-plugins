@@ -4,15 +4,21 @@
     <model name="data_0" type="Executable_simulator">
       <content>../../gdbplasmaplugin/examples/plasma/buffer_overflow/buffer
 main
-x @ x</content>
+x @ x
+r @ r
+b0 @ (int) buf[0]
+b12 @ (int) buf[12]</content>
     </model>
   </models>
   <requirements>
-    <requirement name="data_1" type="bltl">
-      <content>G &lt;= #100 line!=34</content>
-    </requirement>
     <requirement name="data_2" type="bltl">
       <content>G &lt;= #100 x!=100</content>
+    </requirement>
+    <requirement name="line" type="bltl-traces-gdb">
+      <content>G &lt;= #100 line!=34</content>
+    </requirement>
+    <requirement name="x100" type="bltl-traces-gdb">
+      <content>G &lt;= #100 id_0 &amp; id_1</content>
     </requirement>
   </requirements>
   <resources />

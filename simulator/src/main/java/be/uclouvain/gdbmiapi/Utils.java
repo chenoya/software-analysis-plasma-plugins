@@ -22,4 +22,15 @@ public class Utils {
             throw new GdbException(text);
         }
     }
+
+    /**
+     * Convert the long value to a double one if no precision is lost, return NaN otherwise.
+     * @param l the long value to convert
+     * @return a double of the same value or Double.NaN
+     */
+    public static double longToDoubleOrNaN(long l) {
+        double res = (double) l;
+        long res2 = (long) res;
+        return (l == res2) ? res : Double.NaN;
+    }
 }

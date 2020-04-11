@@ -1,33 +1,27 @@
-package be.uclouvain.gdbsimulator;
+package be.uclouvain.softwaresimulator;
 
-import be.uclouvain.gdbsimulator.value.Value;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceIdentifier;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceState;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceTransition;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaSimulatorException;
-import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class GdbState implements InterfaceState {
+public class SoftwareState implements InterfaceState {
 
-	private Map<InterfaceIdentifier, Value<?>> varContentII;
-	private Map<String, Value<?>> varContentStr;
-	
-	public GdbState(Map<InterfaceIdentifier, Value<?>> variablesContent) {
+	private Map<VariableIdentifier, Double> varContentII;
+	private Map<String, Double> varContentStr;
+
+	public SoftwareState(Map<VariableIdentifier, Double> variablesContent) {
 		this.varContentII = variablesContent;
 		varContentStr = new HashMap<>();
 		variablesContent.forEach((i, v) -> varContentStr.put(i.getName(), v));
-
-		/*this.pc = pc;
-		this.line = line;
-		this.variablesContent = new HashMap<>(variablesContent);*/
 	}
 	  
 	@Override
 	public String getCategory() {
-		return "GdbState";
+		return "SoftwareState";
 	}
 
 	@Override
@@ -47,21 +41,21 @@ public class GdbState implements InterfaceState {
 
 	@Override
     public Double getValueOf(InterfaceIdentifier id) throws PlasmaSimulatorException {
+		//TODO
 		if (varContentII.containsKey(id))
-			return varContentII.get(id).toDouble();
-		else {
-			if (id == null)
-				throw new PlasmaSimulatorException("Unknown identifier: null");
-			else
-				throw new PlasmaSimulatorException("Unknown identifier: " + id.getName());
-		}
-
+			return varContentII.get(id);
+		else if (id == null)
+			throw new PlasmaSimulatorException("Unknown identifier: null");
+		else
+			throw new PlasmaSimulatorException("Unknown identifier: " + id.getName());
     }
      
     @Override
     public Double getValueOf(String id) throws PlasmaSimulatorException {
 		if (varContentStr.containsKey(id))
-			return varContentStr.get(id).toDouble();
+			return varContentStr.get(id);
+		else if (id == null)
+			throw new PlasmaSimulatorException("Unknown identifier: null");
 		else
 			throw new PlasmaSimulatorException("Unknown identifier: " + id);
     }
@@ -79,7 +73,7 @@ public class GdbState implements InterfaceState {
 	@Override
 	public Map<InterfaceIdentifier, Double> getValues() {
 		Map<InterfaceIdentifier, Double> res = new HashMap<>(varContentII.size());
-		varContentII.forEach((k,v) -> res.put(k, v.toDouble()));
+		res.putAll(varContentII);
 		return res;
 	}
 
@@ -90,11 +84,9 @@ public class GdbState implements InterfaceState {
 	    varContentII.forEach((i, v) -> s.append("    <expr name=\"")
                 .append(i.getName())
 				.append("\" expr=\"")
-				.append(StringEscapeUtils.escapeJava(((GdbExpression) i).getExpr()))
-                .append("\" type=\"")
-                .append(v.getClass().getSimpleName())
+				.append(i.getExpr())
                 .append("\">")
-                .append(v.getValue())
+                .append(v)
                 .append("</expr>\n"));
 	    s.append("</state>\n");
         return s.toString();

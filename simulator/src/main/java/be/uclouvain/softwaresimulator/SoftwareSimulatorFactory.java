@@ -1,4 +1,4 @@
-package be.uclouvain.gdbsimulator;
+package be.uclouvain.softwaresimulator;
 
 import fr.inria.plasmalab.workflow.data.AbstractModel;
 import fr.inria.plasmalab.workflow.data.factory.AbstractModelFactory;
@@ -8,7 +8,7 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
 import java.io.File;
 
 @PluginImplementation
-public class GdbSimulatorFactory extends AbstractModelFactory {
+public class SoftwareSimulatorFactory extends AbstractModelFactory {
 
     private final static String id = "Executable_simulator";
 
@@ -30,17 +30,17 @@ public class GdbSimulatorFactory extends AbstractModelFactory {
 
     @Override
     public AbstractModel createAbstractModel(String name) {
-        return new GdbSimulator(name, "", id);
+        return new SoftwareSimulator(name, "", id);
     }
 
     @Override
     public AbstractModel createAbstractModel(String name, File file) throws PlasmaDataException {
-        return new GdbSimulator(name, file, id);
+        return new SoftwareSimulator(name, file, id);
     }
 
     @Override
     public AbstractModel createAbstractModel(String name, String content) {
-        return new GdbSimulator(name, content, id);
+        return new SoftwareSimulator(name, content, id);
     }
 
 

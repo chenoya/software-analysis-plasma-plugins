@@ -1,6 +1,8 @@
 package be.uclouvain.gdbmiapi;
 
-public class GdbException extends Exception {
+import java.io.IOException;
+
+public class GdbException extends IOException {
     public GdbException(String message) {
         super(parseMessage(message));
     }
