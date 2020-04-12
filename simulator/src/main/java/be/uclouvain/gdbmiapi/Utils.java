@@ -19,7 +19,7 @@ public class Utils {
 
     public static void assertOrThrow(String text, boolean pred) throws GdbException {
         if (!pred) {
-            throw new GdbException(text);
+            throw new GdbException(text, true);
         }
     }
 

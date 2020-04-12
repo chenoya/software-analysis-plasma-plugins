@@ -29,7 +29,7 @@ public class GdbLtlChecker extends AbstractRequirement {
         this.name = name;
         this.id = id;
         try {
-            this.content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+            this.content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new PlasmaDataException(e);
         }

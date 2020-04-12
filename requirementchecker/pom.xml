@@ -46,7 +46,7 @@
             <artifactId>fr.inria.plasmalab.bltl</artifactId>
             <version>1.4.4</version>
             <scope>system</scope>
-            <systemPath>${plasma-bltl}</systemPath>
+            <systemPath>${plasma-plugins}/${plasma-bltl-name}</systemPath>
         </dependency>
 
     </dependencies>
@@ -76,7 +76,8 @@
                     <archive>
                         <manifestEntries>
                             <!-- link jar properly with bltl plugin -->
-                            <Class-Path>${plasma-bltl}</Class-Path>
+                            <!-- needs to be relative for Windows -->
+                            <Class-Path>${plasma-bltl-name}</Class-Path>
                         </manifestEntries>
                     </archive>
                 </configuration>

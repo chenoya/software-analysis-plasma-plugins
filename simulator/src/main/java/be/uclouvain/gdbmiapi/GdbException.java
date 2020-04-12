@@ -4,7 +4,11 @@ import java.io.IOException;
 
 public class GdbException extends IOException {
     public GdbException(String message) {
-        super(parseMessage(message));
+        super(message);
+    }
+
+    public GdbException(String message, boolean parse) {
+        super(parse ? parseMessage(message): message);
     }
 
     private static String parseMessage(String msg) {

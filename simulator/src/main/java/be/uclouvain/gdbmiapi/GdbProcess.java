@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.*;
 
 public class GdbProcess {
 
@@ -22,7 +23,7 @@ public class GdbProcess {
         }
         String res = readAvailable();
         out.println(res);
-        disableAsyncExec();
+        //disableAsyncExec();
     }
 
     /*public static void main(String[] args) throws IOException {
@@ -91,24 +92,34 @@ public class GdbProcess {
     }*/
 
     public String readAvailable() throws IOException {
-        InputStream is = pr.getInputStream();
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        StringBuilder builder = new StringBuilder();
+        FutureTask<String> futureTask = new FutureTask<>(() -> {
+            InputStream is = pr.getInputStream();
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            StringBuilder builder = new StringBuilder();
 
-        int result;
-        while (true) {
-            result = is.read();
-            buf.write((byte) result);
-            if ((char) result == '\n') {
-                String line = buf.toString(StandardCharsets.UTF_8.name());
-                buf.reset();
-                builder.append(line);
-                if (line.equals("(gdb) \n")) {
-                    break;
+            int result;
+            while (true) {
+                result = is.read();
+                buf.write((byte) result);
+                if ((char) result == '\n') {
+                    String line = buf.toString(StandardCharsets.UTF_8.name());
+                    buf.reset();
+                    builder.append(line);
+                    if (line.equals("(gdb) \n") || line.equals("(gdb) \r\n")) {
+                        break;
+                    }
                 }
             }
+            return builder.toString();
+        });
+
+        try {
+            return futureTask.get(30, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new GdbException("Could not get a response from GDB on time.");
+        } finally {
+            futureTask.cancel(true);
         }
-        return builder.toString();
     }
 
     public String executeGDBCommand(String command) throws IOException {
