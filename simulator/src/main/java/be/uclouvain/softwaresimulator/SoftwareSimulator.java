@@ -209,7 +209,7 @@ public class SoftwareSimulator extends AbstractModel {
             return getCurrentState();
         } catch (IOException e) {
             throw new PlasmaSimulatorException(e.getMessage());
-        } catch (Exception e) {
+        } catch (NullPointerException e) {
             throw new PlasmaSimulatorException("You need to restart the path after changing the configuration.");
         }
     }

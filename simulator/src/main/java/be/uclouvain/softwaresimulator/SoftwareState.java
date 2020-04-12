@@ -41,8 +41,7 @@ public class SoftwareState implements InterfaceState {
 
 	@Override
     public Double getValueOf(InterfaceIdentifier id) throws PlasmaSimulatorException {
-		//TODO
-		if (varContentII.containsKey(id))
+		if (id instanceof VariableIdentifier && varContentII.containsKey(id))
 			return varContentII.get(id);
 		else if (id == null)
 			throw new PlasmaSimulatorException("Unknown identifier: null");

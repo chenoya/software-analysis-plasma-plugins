@@ -105,6 +105,7 @@ public class GdbSimulator extends Simulator {
         stackContent = null;
         stackStart = current;
         stackEnd = end[0];
+        stackWatchAvailable = true;
     }
 
     @Override
@@ -174,7 +175,7 @@ public class GdbSimulator extends Simulator {
             try {
                 if (stackWatchAvailable) {
                     byte[] newStack = DataManipulation.data_read_memory(gdbProcess, stackStart, stackEnd - stackStart);
-                    boolean changed = !Arrays.equals(stackContent, newStack);
+                    boolean changed = stackContent != null && !Arrays.equals(stackContent, newStack);
                     stackContent = newStack;
                     map.put(STACK_M, Optional.of(changed ? 1.0 : 0.0));
                 } else {
