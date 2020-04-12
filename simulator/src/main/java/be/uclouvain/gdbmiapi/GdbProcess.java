@@ -12,10 +12,14 @@ public class GdbProcess {
 
     private Process pr;
 
-    public GdbProcess(PrintStream out) throws IOException, GdbException {
+    public GdbProcess(PrintStream out, String path) throws IOException, GdbException {
         this.out = out;
         Runtime rt = Runtime.getRuntime();
-        this.pr = rt.exec("gdb --interpreter=mi");
+        if (path == null) {
+            this.pr = rt.exec("gdb --interpreter=mi");
+        } else {
+            this.pr = rt.exec(new String[]{path, "--interpreter=mi"});
+        }
         String res = readAvailable();
         out.println(res);
         disableAsyncExec();

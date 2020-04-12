@@ -21,8 +21,8 @@ public class File {
      * @throws IOException
      * @throws GdbException
      */
-    public static void file(GdbProcess gdbProcess, Path file) throws IOException, GdbException {
-        String res = gdbProcess.executeGDBCommand("-file-exec-and-symbols \"" + StringEscapeUtils.escapeJava(file.toString()) + "\"");
+    public static void file(GdbProcess gdbProcess, String file) throws IOException, GdbException {
+        String res = gdbProcess.executeGDBCommand("-file-exec-and-symbols \"" + StringEscapeUtils.escapeJava(file) + "\"");
         Utils.checkDone(res);
     }
 

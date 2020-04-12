@@ -2,12 +2,23 @@
 <PlasmaProject name="Default">
   <models>
     <model name="data_0" type="Executable_simulator">
-      <content>../../gdbplasmaplugin/examples/plasma/buffer_overflow/buffer
-main
-x @ x
-r @ r
-b0 @ (int) buf[0]
-b12 @ (int) buf[12]</content>
+      <content>executable = "../../gdbplasmaplugin/examples/plasma/buffer_overflow/buffer"
+function = "main"
+
+[simulator]
+name = "gdb"
+
+[variables]
+x = "x"
+r = "r"
+b0 = "(int) buf[0]"
+b12 = "(int) buf[12]"
+
+[simulator.options]
+CF = true
+OF = true
+STACK_M = true
+gdb_path = "/usr/bin/gdb"</content>
     </model>
   </models>
   <requirements>
@@ -18,7 +29,7 @@ b12 @ (int) buf[12]</content>
       <content>G &lt;= #100 line!=34</content>
     </requirement>
     <requirement name="x100" type="bltl-traces-gdb">
-      <content>G &lt;= #100 id_0 &amp; id_1</content>
+      <content>G &lt;= #100 $x!=100$</content>
     </requirement>
   </requirements>
   <resources />

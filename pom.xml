@@ -14,9 +14,14 @@
     <packaging>pom</packaging>
 
     <properties>
-        <plasma-worflow>${project.basedir}/../../Plasma/plasmalab-1.4.4/libs/fr.inria.plasmalab.workflow-1.4.4.jar</plasma-worflow>
-        <plasma-jspf>${project.basedir}/../../Plasma/plasmalab-1.4.4/libs/jspf.core-1.0.2.jar</plasma-jspf>
-        <plasma-plugin-folder>${project.basedir}/../../Plasma/plasmalab-1.4.4/plugins</plasma-plugin-folder>
+        <plasma>            ${project.basedir}/../../Plasma/plasmalab-1.4.4             </plasma>
+        <plasma-plugins>    ${plasma}/plugins                                           </plasma-plugins>
+        <plasma-libs>       ${plasma}/libs                                              </plasma-libs>
+        <plasma-workflow>   ${plasma-libs}/fr.inria.plasmalab.workflow-1.4.4.jar        </plasma-workflow>
+        <plasma-jspf>       ${plasma-libs}/jspf.core-1.0.2.jar                          </plasma-jspf>
+        <plasma-algorithm>  ${plasma-libs}/fr.inria.plasmalab.algorithm-1.4.4.jar       </plasma-algorithm>
+        <plasma-bltl>       ${plasma-plugins}/fr.inria.plasmalab.plugin_bltl-1.4.4.jar  </plasma-bltl>
+        <soft-simul>        ${plasma-plugins}/simulator-1.0.0-jar-with-dependencies.jar </soft-simul>
         <encoding>UTF-8</encoding>
     </properties>
 

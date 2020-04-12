@@ -1,6 +1,8 @@
 package be.uclouvain.softwaresimulator;
 
+import be.uclouvain.gdbmiapi.GdbSimulator;
 import be.uclouvain.gdbmiapi.Utils;
+import com.moandjiezana.toml.Toml;
 import fr.inria.plasmalab.workflow.data.AbstractModel;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceIdentifier;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceState;
@@ -9,8 +11,8 @@ import fr.inria.plasmalab.workflow.exceptions.PlasmaDeadlockException;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaSimulatorException;
 
 import java.io.*;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SoftwareSimulator extends AbstractModel {
@@ -21,8 +23,8 @@ public class SoftwareSimulator extends AbstractModel {
     private static ArrayList<VariableIdentifier> exprFromSimu = new ArrayList<>();
     private static ArrayList<VariableIdentifier> exprFromCheck = new ArrayList<>();
 
-    private String filePath = null;
-    private String method = "";
+    private String executable = null;
+    private String function = "";
 
     private Simulator simulator = null;
 
@@ -53,11 +55,18 @@ public class SoftwareSimulator extends AbstractModel {
         }
     }
 
-    public SoftwareSimulator(java.io.File file, String method) {
-        this.filePath = file.getPath();
-        this.method = method;
+    public SoftwareSimulator(java.io.File file, String function) {
+        this.executable = file.getPath();
+        this.function = function;
     }
 
+    private <T> T getFromTOML(Function<String, T> f, String name) {
+        try {
+            return f.apply(name);
+        } catch (ClassCastException e) {
+            return null;
+        }
+    }
 
     @Override
     public boolean checkForErrors() {
@@ -65,29 +74,75 @@ public class SoftwareSimulator extends AbstractModel {
         errors.clear();
         exprFromSimu.clear();
 
-        // Verify model content
-        String[] result = content.split(System.lineSeparator());
-        if (result.length < 2) {
-            errors.add(new PlasmaDataException("Need at least two lines : path to executable + function name + named expressions list (optional)"));
+        Toml toml;
+        try {
+            toml = new Toml().read(content);
+        } catch (IllegalStateException e) {
+            errors.add(new PlasmaDataException(e.getMessage()));
             return true;
         }
 
-        java.io.File file = new java.io.File(result[0]);
-        if (!(file.canRead() && file.isFile() && file.canExecute())) {
-            errors.add(new PlasmaDataException("Impossible to read executable"));
+        executable = getFromTOML(toml::getString, "executable");
+        if (executable == null || executable.isEmpty()) {
+            errors.add(new PlasmaDataException("The 'executable' option must be filled."));
             return true;
         }
-        filePath = result[0];
+        java.io.File file = new java.io.File(executable);
+        if (!(file.canRead() && file.isFile())) {
+            errors.add(new PlasmaDataException("Impossible to read 'executable'."));
+            return true;
+        }
 
-        method = result[1];
+        function = getFromTOML(toml::getString, "function");
+        if (function == null || function.isEmpty()) {
+            errors.add(new PlasmaDataException("The 'function' option must be filled."));
+            return true;
+        }
 
-        for (int i = 2; i < result.length; i++) {
-            String[] parts = result[i].split(" @ ");
-            if (parts.length != 2) {
-                errors.add(new PlasmaDataException("Watched expression must be written as : 'name' @ 'expr'"));
+        Toml vars;
+        try {
+            vars = getFromTOML(toml::getTable, "variables");
+        } catch (ClassCastException e) {
+            errors.add(new PlasmaDataException("The 'variables' option must be a table."));
+            return true;
+        }
+        if (vars != null) {
+            for (Map.Entry<String, Object> entry : vars.toMap().entrySet()) {
+                String k = entry.getKey();
+                Object v = entry.getValue();
+                if (v instanceof String && !((String) v).isEmpty()) {
+                    exprFromSimu.add(new VariableIdentifier(k, (String) v));
+                } else {
+                    errors.add(new PlasmaDataException("The content of the variable must be non-empty strings."));
+                    return true;
+                }
+            }
+        }
+
+        Map<String, Object> options;
+        try {
+            Toml o = toml.getTable("simulator.options");
+            options = (o == null) ? null : o.toMap();
+        } catch (ClassCastException e) {
+            errors.add(new PlasmaDataException("The 'simulator.options' option must be a table."));
+            return true;
+        }
+
+        String s = getFromTOML(toml::getString, "simulator.name");
+        if (s == null || s.isEmpty()) {
+            errors.add(new PlasmaDataException("The 'simulator.name' option must be filled."));
+            return true;
+        }
+        try {
+            if (s.equals("gdb") || s.equals("GDB")) {
+                simulator = new GdbSimulator(executable, function, options);
+            } else {
+                errors.add(new PlasmaDataException("Unknown 'simulator.name' (available options are 'gdb')."));
                 return true;
             }
-            exprFromSimu.add(new VariableIdentifier(parts[0], parts[1]));
+        } catch (IllegalArgumentException e) {
+            errors.add(new PlasmaDataException(e.getMessage()));
+            return true;
         }
 
         return false;
@@ -108,9 +163,6 @@ public class SoftwareSimulator extends AbstractModel {
     @Override
     public InterfaceState newPath() throws PlasmaSimulatorException {
         try {
-            if (simulator == null) {
-                simulator = new be.uclouvain.gdbmiapi.GdbSimulator(Paths.get(filePath), method);
-            }
             simulator.start();
         } catch (IOException e) {
             throw new PlasmaSimulatorException(e.getMessage());
@@ -157,6 +209,8 @@ public class SoftwareSimulator extends AbstractModel {
             return getCurrentState();
         } catch (IOException e) {
             throw new PlasmaSimulatorException(e.getMessage());
+        } catch (Exception e) {
+            throw new PlasmaSimulatorException("You need to restart the path after changing the configuration.");
         }
     }
 
@@ -234,11 +288,11 @@ public class SoftwareSimulator extends AbstractModel {
         return false;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public String getExecutable() {
+        return executable;
     }
 
-    public String getMethod() {
-        return method;
+    public String getFunction() {
+        return function;
     }
 }

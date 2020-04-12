@@ -13,10 +13,6 @@
 
     <packaging>jar</packaging>
 
-    <properties>
-        <plasma-bltl>${project.basedir}/../../Plasma/plasmalab-1.4.4/plugins/fr.inria.plasmalab.plugin_bltl-1.4.4.jar</plasma-bltl>
-    </properties>
-
     <dependencies>
 
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
@@ -41,7 +37,7 @@
             <artifactId>fr.inria.plasmalab.workflow</artifactId>
             <version>1.4.4-SNAPSHOT</version>
             <scope>system</scope>
-            <systemPath>${plasma-worflow}</systemPath>
+            <systemPath>${plasma-workflow}</systemPath>
         </dependency>
 
         <!-- not included in the jar -->
@@ -64,8 +60,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>12</source>
-                    <target>12</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
 
@@ -76,7 +72,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <outputDirectory>${plasma-plugin-folder}</outputDirectory>
+                    <outputDirectory>${plasma-plugins}</outputDirectory>
                     <archive>
                         <manifestEntries>
                             <!-- link jar properly with bltl plugin -->

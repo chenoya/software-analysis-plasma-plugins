@@ -28,6 +28,13 @@
             <version>4.8</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/com.moandjiezana.toml/toml4j -->
+        <dependency>
+            <groupId>com.moandjiezana.toml</groupId>
+            <artifactId>toml4j</artifactId>
+            <version>0.7.2</version>
+        </dependency>
+
         <!-- not included in the jar -->
         <dependency>
             <groupId>jspf</groupId>
@@ -43,7 +50,7 @@
             <artifactId>fr.inria.plasmalab.workflow</artifactId>
             <version>1.4.4-SNAPSHOT</version>
             <scope>system</scope>
-            <systemPath>${plasma-worflow}</systemPath>
+            <systemPath>${plasma-workflow}</systemPath>
         </dependency>
 
     </dependencies>
@@ -74,8 +81,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>12</source>
-                    <target>12</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
 
@@ -86,7 +93,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <outputDirectory>${plasma-plugin-folder}</outputDirectory>
+                    <outputDirectory>${plasma-plugins}</outputDirectory>
                 </configuration>
                 <executions>
                     <execution>
