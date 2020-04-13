@@ -114,6 +114,7 @@ public class GdbProcess {
         });
 
         try {
+            futureTask.run();
             return futureTask.get(30, TimeUnit.SECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new GdbException("Could not get a response from GDB on time.");

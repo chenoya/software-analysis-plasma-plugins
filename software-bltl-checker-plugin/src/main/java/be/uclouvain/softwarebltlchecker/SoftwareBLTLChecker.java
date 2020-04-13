@@ -1,4 +1,4 @@
-package be.uclouvain.gdbltlchecker;
+package be.uclouvain.softwarebltlchecker;
 
 import fr.inria.plasmalab.bltl.BLTLRequirement;
 import fr.inria.plasmalab.workflow.data.AbstractModel;
@@ -18,14 +18,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GdbLtlChecker extends AbstractRequirement {
+public class SoftwareBLTLChecker extends AbstractRequirement {
 
     private Map<String, String> gdbExpr = new HashMap<>();
     private boolean parsed = false;
     private BLTLRequirement bltlRequirement;
     private AbstractModel model;
 
-    public GdbLtlChecker(String name, File file, String id) throws PlasmaDataException {
+    public SoftwareBLTLChecker(String name, File file, String id) throws PlasmaDataException {
         this.name = name;
         this.id = id;
         try {
@@ -39,7 +39,7 @@ public class GdbLtlChecker extends AbstractRequirement {
         bltlRequirement = new BLTLRequirement(name, "", id);
     }
 
-    public GdbLtlChecker(String name, String content, String id) {
+    public SoftwareBLTLChecker(String name, String content, String id) {
         this.name = name;
         this.id = id;
         this.content = content;

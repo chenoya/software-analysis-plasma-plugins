@@ -1,4 +1,4 @@
-package be.uclouvain.gdbltlchecker;
+package be.uclouvain.softwarebltlchecker;
 
 import java.io.File;
 
@@ -8,18 +8,19 @@ import fr.inria.plasmalab.workflow.exceptions.PlasmaDataException;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 
 @PluginImplementation
-public class GdbLtlCheckerFactory extends AbstractRequirementFactory {
-    private static final String name = "BLTL with traces for GDB", description = "Bounded-Linear Temporal Logic with traces for GDB simulator only";
-    private static final String id = "bltl-traces-gdb";
+public class SoftwareBLTLCheckerFactory extends AbstractRequirementFactory {
+
+    private final static String id = "software-bltl-checker";
 
     @Override
     public String getName() {
-        return name;
+        return "BLTL with traces for software simulations";
     }
 
     @Override
     public String getDescription() {
-        return description;
+        return "Bounded-Linear Temporal Logic with traces for software simulations " +
+                "(works only with software-simulator-plugin)";
     }
 
     @Override
@@ -29,17 +30,17 @@ public class GdbLtlCheckerFactory extends AbstractRequirementFactory {
 
     @Override
     public AbstractRequirement createAbstractRequirement(String name) {
-        return new GdbLtlChecker(name , "", id);
+        return new SoftwareBLTLChecker(name , "", id);
     }
 
     @Override
     public AbstractRequirement createAbstractRequirement(String name, File file) throws PlasmaDataException {
-        return new GdbLtlChecker(name, file, id);
+        return new SoftwareBLTLChecker(name, file, id);
     }
 
     @Override
     public AbstractRequirement createAbstractRequirement(String name, String content) {
-        return new GdbLtlChecker(name, content, id);
+        return new SoftwareBLTLChecker(name, content, id);
     }
 
 }

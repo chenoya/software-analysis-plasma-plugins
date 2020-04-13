@@ -10,23 +10,22 @@ import java.io.File;
 @PluginImplementation
 public class SoftwareSimulatorFactory extends AbstractModelFactory {
 
-    private final static String id = "Executable_simulator";
+    private final static String id = "software-simulator";
 
     @Override
     public String getName() {
-        return "GDB Executable simulation";
+        return "Software simulator";
     }
 
     @Override
     public String getDescription() {
-        return "Simulator of binary executable with GDB";
+        return "Simulator of programs using debuggers";
     }
 
     @Override
     public String getId() {
         return id;
     }
-
 
     @Override
     public AbstractModel createAbstractModel(String name) {
@@ -42,6 +41,5 @@ public class SoftwareSimulatorFactory extends AbstractModelFactory {
     public AbstractModel createAbstractModel(String name, String content) {
         return new SoftwareSimulator(name, content, id);
     }
-
 
 }

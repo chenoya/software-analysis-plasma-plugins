@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PlasmaProject name="Default">
   <models>
-    <model name="data_0" type="Executable_simulator">
-      <content>executable = "../../gdbplasmaplugin/examples/plasma/buffer_overflow/buffer"
+    <model name="data_0" type="software-simulator">
+      <content>executable = "../../software-analysis-plasma-plugins/examples/C/buffer_overflow/buffer"
 function = "main"
 
 [simulator]
 name = "gdb"
 
-[variables]
-x = "x"
-r = "r"
-b0 = "(int) buf[0]"
-b12 = "(int) buf[12]"
-
 [simulator.options]
 CF = true
 OF = true
 STACK_M = true
-gdb_path = "/usr/bin/gdb"</content>
+gdb_path = "/usr/bin/gdb"
+
+[variables]
+x = "x"
+r = "r"
+b0 = "(int) buf[0]"
+b12 = "(int) buf[12]"</content>
     </model>
   </models>
   <requirements>
-    <requirement name="data_2" type="bltl">
+    <requirement name="data_2" type="software-bltl-checker">
       <content>G &lt;= #100 x!=100</content>
     </requirement>
-    <requirement name="line" type="bltl-traces-gdb">
+    <requirement name="line" type="software-bltl-checker">
       <content>G &lt;= #100 line!=34</content>
     </requirement>
-    <requirement name="x100" type="bltl-traces-gdb">
+    <requirement name="x100" type="software-bltl-checker">
       <content>G &lt;= #100 $x!=100$</content>
     </requirement>
   </requirements>
