@@ -6,9 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="swifi-algorithm-plugin" />
-        <module name="software-bltl-checker-plugin" />
-        <module name="software-simulator-plugin" />
+        <module name="software-analysis-plasma-plugins" />
       </profile>
     </annotationProcessing>
   </component>
