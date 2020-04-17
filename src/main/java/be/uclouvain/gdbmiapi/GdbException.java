@@ -1,5 +1,7 @@
 package be.uclouvain.gdbmiapi;
 
+import be.uclouvain.Utils;
+
 import java.io.IOException;
 
 public class GdbException extends IOException {

@@ -5,7 +5,7 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.IOException;
 
-import static be.uclouvain.gdbmiapi.Utils.assertOrThrow;
+import static be.uclouvain.Utils.assertOrThrow;
 
 public class Breakpoint {
     public static void break_(GdbProcess gdbProcess, String expr) throws IOException, GdbException {

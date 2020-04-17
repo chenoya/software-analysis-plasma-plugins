@@ -1,12 +1,13 @@
 package be.uclouvain.gdbmiapi.commands;
 
+import be.uclouvain.Utils;
 import be.uclouvain.gdbmiapi.*;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.IOException;
 
-import static be.uclouvain.gdbmiapi.Utils.assertOrThrow;
-import static be.uclouvain.gdbmiapi.Utils.extractValue;
+import static be.uclouvain.Utils.assertOrThrow;
+import static be.uclouvain.Utils.extractValue;
 
 public class DataManipulation {
     public static String data_eval_expr(GdbProcess gdbProcess, String expr) throws IOException, GdbException {

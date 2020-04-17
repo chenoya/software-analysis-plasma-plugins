@@ -8,8 +8,8 @@ import be.uclouvain.gdbmiapi.ParseMI;
 import java.io.IOException;
 import java.util.Optional;
 
-import static be.uclouvain.gdbmiapi.Utils.assertOrThrow;
-import static be.uclouvain.gdbmiapi.Utils.extractValue;
+import static be.uclouvain.Utils.assertOrThrow;
+import static be.uclouvain.Utils.extractValue;
 
 public class StackManipulation {
     public static class Frame {

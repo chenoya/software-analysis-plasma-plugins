@@ -1,6 +1,11 @@
-package be.uclouvain.gdbmiapi;
+package be.uclouvain;
 
+import be.uclouvain.gdbmiapi.GdbException;
+import be.uclouvain.gdbmiapi.MIOutputParser;
+import be.uclouvain.gdbmiapi.ParseMI;
 import org.apache.commons.text.StringEscapeUtils;
+
+import java.util.function.Function;
 
 public class Utils {
     public static String extractValue(String s) {
@@ -33,4 +38,13 @@ public class Utils {
         long res2 = (long) res;
         return (l == res2) ? res : Double.NaN;
     }
+
+    public static <T> T getFromTOML(Function<String, T> f, String name) {
+        try {
+            return f.apply(name);
+        } catch (ClassCastException e) {
+            return null;
+        }
+    }
+
 }

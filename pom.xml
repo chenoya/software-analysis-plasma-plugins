@@ -17,7 +17,7 @@
         <plasma-workflow>   ${plasma-libs}/fr.inria.plasmalab.workflow-1.4.4.jar        </plasma-workflow>
         <plasma-jspf>       ${plasma-libs}/jspf.core-1.0.2.jar                          </plasma-jspf>
         <plasma-algorithm>  ${plasma-libs}/fr.inria.plasmalab.algorithm-1.4.4.jar       </plasma-algorithm>
-        <plasma-bltl>       ${plasma-plugins}/fr.inria.plasmalab.plugin_bltl-1.4.4.jar  </plasma-bltl>
+        <plasma-bltl-name>  fr.inria.plasmalab.plugin_bltl-1.4.4.jar                    </plasma-bltl-name>
         <encoding>UTF-8</encoding>
     </properties>
 
@@ -76,7 +76,7 @@
             <artifactId>fr.inria.plasmalab.bltl</artifactId>
             <version>1.4.4</version>
             <scope>system</scope>
-            <systemPath>${plasma-bltl}</systemPath>
+            <systemPath>${plasma-plugins}/${plasma-bltl-name}</systemPath>
         </dependency>
 
     </dependencies>

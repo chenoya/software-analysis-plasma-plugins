@@ -1,7 +1,8 @@
 package be.uclouvain.softwaresimulator;
 
 import be.uclouvain.gdbmiapi.GdbSimulator;
-import be.uclouvain.gdbmiapi.Utils;
+import be.uclouvain.Utils;
+import be.uclouvain.softwarebltlchecker.SoftwareBLTLChecker;
 import com.moandjiezana.toml.Toml;
 import fr.inria.plasmalab.workflow.data.AbstractModel;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceIdentifier;
@@ -11,8 +12,9 @@ import fr.inria.plasmalab.workflow.exceptions.PlasmaDeadlockException;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaSimulatorException;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SoftwareSimulator extends AbstractModel {
@@ -21,7 +23,7 @@ public class SoftwareSimulator extends AbstractModel {
     private static VariableIdentifier LINE_ID = new VariableIdentifier("line", "line");
 
     private static List<VariableIdentifier> exprFromSimu = new ArrayList<>();
-    private static List<VariableIdentifier> exprFromCheck = new ArrayList<>();
+    private static ArrayList<SoftwareBLTLChecker> registeredCheckers = new ArrayList<>();
 
     private String executable = null;
     private String function = "";
@@ -30,26 +32,46 @@ public class SoftwareSimulator extends AbstractModel {
 
     private List<InterfaceState> trace;
 
-    public SoftwareSimulator(String name, String content, String id) {
+    // creating a new model
+    public SoftwareSimulator(String name, String id) {
         this.name = name;
-        this.content = content;
         this.errors = new ArrayList<>();
         this.origin = null;
         this.id = id;
+        //TODO default content
+        this.content = "executable = \"\"\n" +
+                "function = \"main\"\n" +
+                "\n" +
+                "[simulator]\n" +
+                "name = \"gdb\"\n" +
+                "\n" +
+                "[simulator.options]\n" +
+                "CF = true\n" +
+                "OF = true\n" +
+                "STACK_M = true\n" +
+                "gdb_path = \"/usr/bin/gdb\"\n" +
+                "\n" +
+                "[variables]\n";
     }
 
+    // opening a saved model
+    public SoftwareSimulator(String name, String content, String id) {
+        this.name = name;
+        this.errors = new ArrayList<>();
+        this.origin = null;
+        this.id = id;
+        this.content = content;
+
+    }
+
+    // importing model from file
     public SoftwareSimulator(String name, java.io.File file, String id) throws PlasmaDataException {
         this.name = name;
-        this.content = "";
         this.errors = new ArrayList<>();
         this.origin = file;
         this.id = id;
         try {
-            FileReader fr = new FileReader(file);
-            BufferedReader br = new BufferedReader(fr);
-            while (br.ready())
-                content = content + br.readLine() + "\n";
-            br.close();
+            this.content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new PlasmaDataException("Cannot read model file", e);
         }
@@ -58,14 +80,6 @@ public class SoftwareSimulator extends AbstractModel {
     public SoftwareSimulator(java.io.File file, String function) {
         this.executable = file.getPath();
         this.function = function;
-    }
-
-    private <T> T getFromTOML(Function<String, T> f, String name) {
-        try {
-            return f.apply(name);
-        } catch (ClassCastException e) {
-            return null;
-        }
     }
 
     @Override
@@ -82,7 +96,7 @@ public class SoftwareSimulator extends AbstractModel {
             return true;
         }
 
-        executable = getFromTOML(toml::getString, "executable");
+        executable = Utils.getFromTOML(toml::getString, "executable");
         if (executable == null || executable.isEmpty()) {
             errors.add(new PlasmaDataException("The 'executable' option must be filled."));
             return true;
@@ -93,7 +107,7 @@ public class SoftwareSimulator extends AbstractModel {
             return true;
         }
 
-        function = getFromTOML(toml::getString, "function");
+        function = Utils.getFromTOML(toml::getString, "function");
         if (function == null || function.isEmpty()) {
             errors.add(new PlasmaDataException("The 'function' option must be filled."));
             return true;
@@ -101,7 +115,7 @@ public class SoftwareSimulator extends AbstractModel {
 
         Toml vars;
         try {
-            vars = getFromTOML(toml::getTable, "variables");
+            vars = Utils.getFromTOML(toml::getTable, "variables");
         } catch (ClassCastException e) {
             errors.add(new PlasmaDataException("The 'variables' option must be a table."));
             return true;
@@ -128,7 +142,7 @@ public class SoftwareSimulator extends AbstractModel {
             return true;
         }
 
-        String s = getFromTOML(toml::getString, "simulator.name");
+        String s = Utils.getFromTOML(toml::getString, "simulator.name");
         if (s == null || s.isEmpty()) {
             errors.add(new PlasmaDataException("The 'simulator.name' option must be filled."));
             return true;
@@ -148,11 +162,8 @@ public class SoftwareSimulator extends AbstractModel {
         return false;
     }
 
-    @SuppressWarnings("unused")
-    //Used through reflexion from the Checker.
-    public void addGdbExpressions(Map<String, String> pairs) {
-        exprFromCheck.clear();
-        pairs.forEach((name, expr) -> exprFromCheck.add(new VariableIdentifier(name, expr)));
+    public void addGdbExpressions(SoftwareBLTLChecker softwareBLTLChecker) {
+        registeredCheckers.add(softwareBLTLChecker);
     }
 
     @Override
@@ -162,6 +173,7 @@ public class SoftwareSimulator extends AbstractModel {
 
     @Override
     public InterfaceState newPath() throws PlasmaSimulatorException {
+        atDeadlock = false;
         try {
             simulator.start();
         } catch (IOException e) {
@@ -192,17 +204,27 @@ public class SoftwareSimulator extends AbstractModel {
         for (VariableIdentifier i : exprFromSimu) {
             map.put(i, simulator.evaluateDoubleExpression(i.getExpr()).orElse(Double.NaN));
         }
-        for (VariableIdentifier i : exprFromCheck) {
-            map.put(i, simulator.evaluateBooleanExpression(i.getExpr()).map(b -> b ? 1.0 : 0.0).orElse(Double.NaN));
+        for (SoftwareBLTLChecker softwareBLTLChecker : registeredCheckers) {
+            for (VariableIdentifier i : softwareBLTLChecker.getVariableIdentifiers()) {
+                map.put(i, simulator.evaluateBooleanExpression(i.getExpr()).map(b -> b ? 1.0 : 0.0).orElse(Double.NaN));
+            }
         }
+
         return new SoftwareState(map);
     }
 
+    private boolean atDeadlock = false;
+
     @Override
     public InterfaceState simulate() throws PlasmaSimulatorException {
+        //when dealing with multiple checkers, simulate() can be called even after previously raising PlasmaDeadlockException
+        if (atDeadlock) {
+            throw new PlasmaDeadlockException(getCurrentState(), getTraceLength());
+        }
         try {
             boolean stillInFct = simulator.nextInstruction();
             if (!stillInFct) {
+                atDeadlock = true;
                 throw new PlasmaDeadlockException(getCurrentState(), getTraceLength());
             }
             trace.add(fill_state());
@@ -257,8 +279,10 @@ public class SoftwareSimulator extends AbstractModel {
         for (InterfaceIdentifier i : exprFromSimu) {
             map.put(i.getName(), i);
         }
-        for (InterfaceIdentifier i : exprFromCheck) {
-            map.put(i.getName(), i);
+        for (SoftwareBLTLChecker softwareBLTLChecker : registeredCheckers) {
+            for (InterfaceIdentifier i : softwareBLTLChecker.getVariableIdentifiers()) {
+                map.put(i.getName(), i);
+            }
         }
         return map;
     }
@@ -299,5 +323,11 @@ public class SoftwareSimulator extends AbstractModel {
 
     public String getFunction() {
         return function;
+    }
+
+    @Override
+    public void clean() throws PlasmaSimulatorException {
+        super.clean();
+        registeredCheckers.clear();
     }
 }

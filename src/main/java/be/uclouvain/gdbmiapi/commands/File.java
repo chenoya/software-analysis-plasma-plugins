@@ -1,12 +1,13 @@
 package be.uclouvain.gdbmiapi.commands;
 
+import be.uclouvain.Utils;
 import be.uclouvain.gdbmiapi.*;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static be.uclouvain.gdbmiapi.Utils.assertOrThrow;
+import static be.uclouvain.Utils.assertOrThrow;
 
 public class File {
     /**

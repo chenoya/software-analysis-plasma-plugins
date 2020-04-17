@@ -2,7 +2,7 @@ package be.uclouvain.gdbmiapi.commands;
 
 import be.uclouvain.gdbmiapi.GdbException;
 import be.uclouvain.gdbmiapi.GdbProcess;
-import be.uclouvain.gdbmiapi.Utils;
+import be.uclouvain.Utils;
 
 import java.io.IOException;
 
