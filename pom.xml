@@ -10,6 +10,7 @@
     <modules>
         <module>software-bltl-checker-plugin</module>
         <module>software-simulator-plugin</module>
+        <module>swifi-algorithm-plugin</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -21,7 +22,7 @@
         <plasma-jspf>       ${plasma-libs}/jspf.core-1.0.2.jar                          </plasma-jspf>
         <plasma-algorithm>  ${plasma-libs}/fr.inria.plasmalab.algorithm-1.4.4.jar       </plasma-algorithm>
         <plasma-bltl-name>  fr.inria.plasmalab.plugin_bltl-1.4.4.jar                    </plasma-bltl-name>
-        <soft-simul-name>   simulator-1.0.0-jar-with-dependencies.jar                   </soft-simul-name>
+        <soft-simul-name>   software-simulator-plugin-1.0.0-jar-with-dependencies.jar   </soft-simul-name>
         <encoding>UTF-8</encoding>
     </properties>
 

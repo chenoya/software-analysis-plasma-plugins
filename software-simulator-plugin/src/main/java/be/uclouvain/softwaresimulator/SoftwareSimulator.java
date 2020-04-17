@@ -20,8 +20,8 @@ public class SoftwareSimulator extends AbstractModel {
     private static VariableIdentifier PC_ID = new VariableIdentifier("pc", "$pc");
     private static VariableIdentifier LINE_ID = new VariableIdentifier("line", "line");
 
-    private static ArrayList<VariableIdentifier> exprFromSimu = new ArrayList<>();
-    private static ArrayList<VariableIdentifier> exprFromCheck = new ArrayList<>();
+    private static List<VariableIdentifier> exprFromSimu = new ArrayList<>();
+    private static List<VariableIdentifier> exprFromCheck = new ArrayList<>();
 
     private String executable = null;
     private String function = "";
@@ -281,6 +281,11 @@ public class SoftwareSimulator extends AbstractModel {
     @Override
     public List<InterfaceState> getTrace() {
         return trace;
+    }
+
+    @Override
+    public int getTraceLength() {
+        return trace == null ? 0 : trace.size();
     }
 
     @Override
