@@ -8,13 +8,15 @@ import java.io.IOException;
 
 public class ProgramExecution {
     public static void run(GdbProcess gdbProcess) throws IOException, GdbException {
-        String[] res = gdbProcess.executeGDBCommand("-exec-run", 2);
-        Utils.checkDone(res[0]);
+        String res = gdbProcess.executeGDBCommand("-exec-run");
+        Utils.checkDone(res);
+        gdbProcess.readAvailable(); //discard the second response
     }
 
     public static void start(GdbProcess gdbProcess) throws IOException, GdbException {
-        String[] res = gdbProcess.executeGDBCommand("-exec-run --start", 2);
-        Utils.checkDone(res[0]);
+        String res = gdbProcess.executeGDBCommand("-exec-run --start");
+        Utils.checkDone(res);
+        gdbProcess.readAvailable(); //discard the second response
     }
 
     public static void nexti(GdbProcess gdbProcess) throws IOException, GdbException {
@@ -36,8 +38,9 @@ public class ProgramExecution {
      * @throws GdbException
      */
     public static void nexti(GdbProcess gdbProcess, boolean reverse) throws IOException, GdbException {
-        String[] res = gdbProcess.executeGDBCommand(reverse ? "-exec-next-instruction --reverse" : "-exec-next-instruction", 2);
-        Utils.checkDone(res[0]);
+        String res = gdbProcess.executeGDBCommand(reverse ? "-exec-next-instruction --reverse" : "-exec-next-instruction");
+        Utils.checkDone(res);
+        gdbProcess.readAvailable(); //discard the second response
     }
 
     public static void stepi(GdbProcess gdbProcess) throws IOException, GdbException {
@@ -58,8 +61,9 @@ public class ProgramExecution {
      * @throws GdbException
      */
     public static void stepi(GdbProcess gdbProcess, boolean reverse) throws IOException, GdbException {
-        String[] res = gdbProcess.executeGDBCommand(reverse ? "-exec-step-instruction --reverse" : "-exec-step-instruction", 2);
-        Utils.checkDone(res[0]);
+        String res = gdbProcess.executeGDBCommand(reverse ? "-exec-step-instruction --reverse" : "-exec-step-instruction");
+        Utils.checkDone(res);
+        gdbProcess.readAvailable(); //discard the second response
     }
 
 

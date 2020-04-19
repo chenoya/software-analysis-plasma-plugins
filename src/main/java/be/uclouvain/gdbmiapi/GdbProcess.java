@@ -134,20 +134,18 @@ public class GdbProcess {
         return res;
     }
 
-    public String[] executeGDBCommand(String command, int nbResponse) throws IOException {
-        pr.getOutputStream().write((command + "\n").getBytes());
-        pr.getOutputStream().flush();
-        this.out.print(command + " : ");
-        String[] res = new String[nbResponse];
-        for (int i = 0; i < nbResponse; i++) {
-            res[i] = readAvailable();
-        }
-        this.out.println(res[0]);
-        return res;
-    }
-
     private void disableAsyncExec() throws IOException, GdbException {
         String res = executeGDBCommand("-gdb-set mi-async off");
         Utils.checkDone(res);
+    }
+
+    public void wash() throws IOException {
+        pr.getOutputStream().flush();
+        while (pr.getInputStream().available() > 0) {
+            pr.getInputStream().read();
+        }
+        while (pr.getErrorStream().available() > 0) {
+            pr.getErrorStream().read();
+        }
     }
 }

@@ -1,70 +1,177 @@
 package be.uclouvain.swifigenerator;
 
-import java.util.ArrayList;
-import java.util.List;
-
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import be.uclouvain.softwaresimulator.SoftwareSimulator;
 import fr.inria.plasmalab.algorithm.AbstractAlgorithm;
 import fr.inria.plasmalab.workflow.data.AbstractRequirement;
 import fr.inria.plasmalab.workflow.data.simulation.InterfaceState;
-import fr.inria.plasmalab.workflow.exceptions.PlasmaExperimentException;
+import fr.inria.plasmalab.workflow.exceptions.PlasmaCheckerException;
+import fr.inria.plasmalab.workflow.exceptions.PlasmaSimulatorException;
 import fr.inria.plasmalab.workflow.shared.ResultInterface;
 
 public class SwifiGenerator extends AbstractAlgorithm {
-	//final static Logger logger = LoggerFactory.getLogger(MyAlgorithm.class);
 
-	private int nbSims;
-	private SoftwareSimulator modelGdb;
-	
-	public SwifiGenerator(SoftwareSimulator model, List<AbstractRequirement> reqs, String id) {
+	private final SoftwareSimulator modelSoftware;
+	private final AlgorithmOptions algorithmOptions;
+	private String oldExecutable;
+	private long nbIterEsti;
+	private long startTime;
+
+	public SwifiGenerator(SoftwareSimulator model, List<AbstractRequirement> reqs, AlgorithmOptions algorithmOptions, String id) {
 		this.model = model;
-		this.modelGdb = model;
+		this.modelSoftware = model;
 		this.requirements = reqs;
-		//this.nbSims = nbSims;
 		this.nodeURI = id;
+		this.algorithmOptions = algorithmOptions;
 	}
-	
+
+	private long nbIter = 0;
+	private double[] results;
+
+
+	private void combination(List<OptionIter> options, int level, List<String> selectedOption) {
+		if (stopOrderReceived) {
+			return; //abort
+		}
+		if (nbIter >= algorithmOptions.getNbMaxSimu()) {
+			return; //max number of simulation reached
+		}
+		if (level >= options.size()) {
+			simulatePath(selectedOption);
+			return;
+		}
+		for (String option : options.get(level)) {
+			ArrayList<String> newSelectedOptions = new ArrayList<>(selectedOption);
+			newSelectedOptions.add(option);
+			combination(options, level + 1, newSelectedOptions);
+		}
+	}
+
+	private void simulatePath(List<String> selectedOption) {
+		try {
+			File file = File.createTempFile("exec", null);
+			file.deleteOnExit();
+
+			String modifiedExecutable = file.getAbsolutePath();
+			modelSoftware.setExecutable(modifiedExecutable);
+
+			Runtime rt = Runtime.getRuntime();
+			List<String> params = new ArrayList<>();
+			params.add("python3");
+			params.add("/home/antoine/Documents/Unif/TFE/SWIFI_Tool/swifitool/faults_inject.py");
+			params.add("-i");
+			params.add(oldExecutable);
+			params.add("-o");
+			params.add(modifiedExecutable);
+			params.addAll(Arrays.asList(algorithmOptions.getOtherParams().split(" ")));
+			for (String o : selectedOption) {
+				String[] parts = o.split(" ");
+				params.addAll(Arrays.asList(parts));
+			}
+			Process pr = rt.exec(params.toArray(new String[0]));
+			pr.waitFor();
+
+			ByteArrayOutputStream buf = new ByteArrayOutputStream();
+			while (pr.getErrorStream().available() > 0) {
+				buf.write((byte) pr.getErrorStream().read());
+			}
+			String pythonErrorMsg = buf.toString(StandardCharsets.UTF_8.name());
+			if (!pythonErrorMsg.isEmpty()) {
+				throw new PlasmaSimulatorException(pythonErrorMsg);
+			}
+
+			InterfaceState path = model.newPath();
+			for (int i = 0; i < requirements.size(); i++) {
+				double res = requirements.get(i).check(path);
+				if (res > 0) {
+					results[i] += res;
+				}
+			}
+			nbIter++;
+			notifyResults();
+			notifyProgress();
+
+		} catch (IOException | InterruptedException e) {
+			listener.notifyAlgorithmError(nodeURI, e.toString());
+			throw new RuntimeException(e);
+		} catch (PlasmaSimulatorException | PlasmaCheckerException e) {
+			System.out.println(Arrays.toString(selectedOption.toArray()));
+			System.out.println(e.getMessage());
+			// assume res = 0 for all checkers so just update nbIter
+			nbIter++;
+			notifyResults();
+			notifyProgress();
+		}
+	}
+
 	@Override
 	public void run() {
 		initializeAlgorithm();
 		listener.notifyAlgorithmStarted(nodeURI);
-		//logger.info("Starting " + nodeURI  + " with " + nbSims + " simulations.");
 
-		String f = this.modelGdb.getExecutable();
-		String func = this.modelGdb.getFunction();
+		oldExecutable = modelSoftware.getExecutable();
+		modelSoftware.setWithCache(false);
 
-		//GdbSimulator g = new GdbSimulator("", func);
+		File f = new File(oldExecutable);
+		long fileSize = f.length();
 
-		List<ResultInterface> results = new ArrayList<ResultInterface>(1);
-		double result = 0.0;
-		try {
-			for (int i=1; i<= nbSims && !stopOrderReceived; i++) {
-				InterfaceState path = model.newPath();
-				double res = requirements.get(0).check(path);
-				if (res > 0) {
-					result += res; 
-				}
-			}
+		List<OptionIter> options = new ArrayList<>();
+		for (int i = 0; i < algorithmOptions.getNop(); i++) {
+			options.add(new OptionIter("NOP", fileSize));
 		}
-		catch (PlasmaExperimentException e) {
-			//logger.error(e.getMessage(),e);
-			listener.notifyAlgorithmError(nodeURI, e.toString());
-			errorOccured = true;
+		for (int i = 0; i < algorithmOptions.getZ1b(); i++) {
+			options.add(new OptionIter("Z1B", fileSize));
 		}
-		result /= nbSims;
-		results.add(new MyResult(requirements.get(0), result, nbSims));
-		
+		for (int i = 0; i < algorithmOptions.getZ1w(); i++) {
+			options.add(new OptionIter("NOP", fileSize));
+		}
+		for (int i = 0; i < algorithmOptions.getFlp(); i++) {
+			options.add(new OptionIterFlp("FLP", fileSize));
+		}
+		for (int i = 0; i < algorithmOptions.getJmp(); i++) {
+			options.add(new OptionIter("JMP", fileSize));
+		}
+		for (int i = 0; i < algorithmOptions.getJbe(); i++) {
+			options.add(new OptionIter("JBE", fileSize));
+		}
+
+		nbIter = 0;
+		results = new double[requirements.size()];
+		nbIterEsti = 1;
+		for (OptionIter i : options) {
+			nbIterEsti *= i.nbIter();
+		}
+		nbIterEsti = Math.min(nbIterEsti, algorithmOptions.getNbMaxSimu());
+		startTime = System.currentTimeMillis();
+		combination(options, 0, new ArrayList<>());
+
 		if(!errorOccured){
 			// Notify new results
-			listener.publishResults(nodeURI, results);
+			notifyResults();
 			// Notify completed
 			if(stopOrderReceived)
 				listener.notifyAlgorithmStopped(nodeURI);
 			else
 				listener.notifyAlgorithmCompleted(nodeURI);
 		}
+	}
+
+	private void notifyProgress() {
+		double p = (double) nbIter / (double) nbIterEsti;
+		listener.notifyProgress((int) (100*p));
+		listener.notifyTimeRemaining((long) ((System.currentTimeMillis()-startTime)/p-(System.currentTimeMillis()-startTime)));
+	}
+
+	private void notifyResults() {
+		List<ResultInterface> resultList = new ArrayList<>(requirements.size());
+		for (int i = 0; i < requirements.size(); i++) {
+			resultList.add(new MyResult(requirements.get(i), results[i] / nbIter, (int) nbIter));
+		}
+		listener.publishResults(nodeURI, resultList);
 	}
 }

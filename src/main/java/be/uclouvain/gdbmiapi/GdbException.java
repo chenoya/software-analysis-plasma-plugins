@@ -20,7 +20,7 @@ public class GdbException extends IOException {
                     output.result_record().result_class().ERROR() != null &&
                     output.result_record().result().size() == 1 &&
                     output.result_record().result(0).variable().getText().equals("msg")) {
-                return Utils.extractValue(output.result_record().result(0).value().getText());
+                return "GDB: " + Utils.extractValue(output.result_record().result(0).value().getText());
             } else {
                 return msg;
             }

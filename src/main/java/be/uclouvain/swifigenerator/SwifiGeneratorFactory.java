@@ -1,13 +1,8 @@
 package be.uclouvain.swifigenerator;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import be.uclouvain.softwaresimulator.SoftwareSimulator;
 import fr.inria.plasmalab.algorithm.InterfaceAlgorithmScheduler;
 import fr.inria.plasmalab.algorithm.InterfaceAlgorithmWorker;
-import fr.inria.plasmalab.algorithm.data.SMCAlternatives;
 import fr.inria.plasmalab.algorithm.data.SMCParameter;
 import fr.inria.plasmalab.algorithm.factory.InterfaceAlgorithmFactory;
 import fr.inria.plasmalab.workflow.data.AbstractModel;
@@ -15,12 +10,22 @@ import fr.inria.plasmalab.workflow.data.AbstractRequirement;
 import fr.inria.plasmalab.workflow.exceptions.PlasmaParameterException;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 @PluginImplementation
+@SuppressWarnings("unused")
 public class SwifiGeneratorFactory implements InterfaceAlgorithmFactory {
 
+	private final static String id = "swifi-generator";
+	private static ArrayList<SMCParameter> parameters;
+
 	@Override
-	public String getId() {
-		return "swifigenerator";
+	public String toString(){
+		return getName();
 	}
 
 	@Override
@@ -32,71 +37,111 @@ public class SwifiGeneratorFactory implements InterfaceAlgorithmFactory {
 	public String getDescription() {
 		return "SoftWare Implemented Fault Injection generator";
 	}
-	
-	@Override
-	public String toString(){
-		return getName();
-	}
-	
-	@Override
-	public InterfaceAlgorithmScheduler createScheduler(AbstractModel model,
-			List<AbstractRequirement> reqs,
-			Map<String, Object> parametersMap) throws PlasmaParameterException {
-		Object distributed = parametersMap.get("distributed");
-		if (distributed instanceof Boolean && (Boolean)distributed) {
-			throw new PlasmaParameterException("Distributed not available.");
-		}
-		if (!(model instanceof SoftwareSimulator))
-			throw new PlasmaParameterException("This algorithm works only with a GDB simulator");
-		/*int nbSims = 0;
-		try {
-			nbSims = Integer.parseInt(parametersMap.get("Nb Sims").toString());
-		}
-		catch(Exception e){
-			throw new PlasmaParameterException(e);
-		}
-		if ( !(nbSims > 0) )
-			throw new PlasmaParameterException("Nb Sims" + " must be > 0.");*/
-		return new SwifiGenerator((SoftwareSimulator) model, reqs, getId());
-	}
 
 	@Override
-	public InterfaceAlgorithmWorker createWorker(AbstractModel arg0, List<AbstractRequirement> arg1) {
-		return null; // not distributed
-	}
-
-	@Override
-	public List<SMCParameter> getParametersList() {
-		List<SMCParameter> parameters = new ArrayList<SMCParameter>();
-		parameters.add(new SMCParameter("Max simul", "Maximum nmber of simulations", false));
-		SMCAlternatives z1b = new SMCAlternatives("Z1B", "Zero one byte", new ArrayList<>(), null);
-		SMCAlternatives z1w = new SMCAlternatives("Z1W", "Zero one word", new ArrayList<>(), z1b);
-		z1b.setNext(z1w);
-		parameters.add(z1b); //only add head
-		return parameters;
-	}
-	
-	@Override
-	public void fillParametersMap(Map<String, Object> parametersMap, String[] parameters) throws PlasmaParameterException {
-		throw new PlasmaParameterException("Not implemented");
-		/*try{
-			if(parameters.length == 1)
-				parametersMap.put("Nb Sims", Boolean.parseBoolean(parameters[0]));
-			else
-				throw new PlasmaParameterException("Not enough parameters for the SWIFI generator");
-		} catch(NumberFormatException e){
-			throw new PlasmaParameterException(e);
-		}*/
-	}
-
-	@Override
-	public Class<?> getResourceHandler() {
-		return null; // not distributed
+	public String getId() {
+		return id;
 	}
 
 	@Override
 	public boolean isDistributed() {
+		//TODO
 		return false;
+	}
+
+	@Override
+	public List<SMCParameter> getParametersList() {
+		if (parameters == null) {
+			parameters = new ArrayList<>();
+			parameters.add(new SMCParameter("Max simul", "Maximum nmber of simulations", false));
+			parameters.add(new SMCParameter("NOP", "Number of NOP used", false));
+			parameters.add(new SMCParameter("Z1B", "Number of Z1B used", false));
+			parameters.add(new SMCParameter("Z1W", "Number of Z1W used", false));
+			parameters.add(new SMCParameter("FLP", "Number of FLP used", false));
+			parameters.add(new SMCParameter("JMP", "Number of JMP used", false));
+			parameters.add(new SMCParameter("JBE", "Number of JBE used", false));
+			parameters.add(new SMCParameter("Other parameters", "Other options given to SWIFI", false));
+		}
+		return parameters;
+	}
+
+	@Override
+	public void fillParametersMap(Map<String, Object> parametersMap, String[] parameters) throws PlasmaParameterException {
+		try{
+			if(parameters.length == 8) {
+				parametersMap.put("Max simul", parameters[0].length() == 0 ? Long.MAX_VALUE : Long.parseLong(parameters[0]));
+				parametersMap.put("NOP", parameters[1].length() == 0 ? 0 : Integer.parseInt(parameters[1]));
+				parametersMap.put("Z1B", parameters[2].length() == 0 ? 0 : Integer.parseInt(parameters[2]));
+				parametersMap.put("Z1W", parameters[3].length() == 0 ? 0 : Integer.parseInt(parameters[3]));
+				parametersMap.put("FLP", parameters[4].length() == 0 ? 0 : Integer.parseInt(parameters[4]));
+				parametersMap.put("JMP", parameters[5].length() == 0 ? 0 : Integer.parseInt(parameters[5]));
+				parametersMap.put("JBE", parameters[6].length() == 0 ? 0 : Integer.parseInt(parameters[6]));
+				parametersMap.put("Other parameters", parameters[7]);
+			} else {
+				throw new PlasmaParameterException("Wrong number of parameters for the " + getName() + " algorithm.");
+			}
+		} catch (NumberFormatException e){
+			throw new PlasmaParameterException("Cannot parse parameters: " +  e.getMessage());
+		}
+	}
+
+	@Override
+	public InterfaceAlgorithmWorker createWorker(AbstractModel arg0, List<AbstractRequirement> arg1) {
+		//TODO
+		return null;
+	}
+
+	private <T> T parseParameter(Map<String, Object> map, String name, Function<String, T> parse, Predicate<T> cond) throws PlasmaParameterException {
+		Object o = map.get(name);
+		if (o instanceof String) {
+			try {
+				T res = parse.apply((String) o);
+				if (res == null || !cond.test(res))
+					throw new PlasmaParameterException("Invalid option format : " + name);
+				return res;
+			} catch (Exception e) {
+				throw new PlasmaParameterException("Invalid option format : " + name);
+			}
+		} else {
+			throw new PlasmaParameterException("Option not found or incorrect type : " + name);
+		}
+	}
+
+	@Override
+	public InterfaceAlgorithmScheduler createScheduler(AbstractModel model, List<AbstractRequirement> reqs, Map<String, Object> parametersMap) throws PlasmaParameterException {
+
+		boolean distributed;
+		Object o = parametersMap.get("distributed");
+		if (o instanceof Boolean)
+			distributed = (boolean) o;
+		else
+			throw new PlasmaParameterException("Invalid option format : distributed");
+
+		AlgorithmOptions algorithmOptions = new AlgorithmOptions(
+				parseParameter(parametersMap, "Max simul", (s) -> s.isEmpty() ? Long.MAX_VALUE : Long.parseLong(s), (i) -> i >= 0),
+				parseParameter(parametersMap, "NOP", (s) -> s.isEmpty() ? 0 : Integer.parseInt(s), (i) -> i >= 0),
+				parseParameter(parametersMap, "Z1B", (s) -> s.isEmpty() ? 0 : Integer.parseInt(s), (i) -> i >= 0),
+				parseParameter(parametersMap, "Z1W", (s) -> s.isEmpty() ? 0 : Integer.parseInt(s), (i) -> i >= 0),
+				parseParameter(parametersMap, "FLP", (s) -> s.isEmpty() ? 0 : Integer.parseInt(s), (i) -> i >= 0),
+				parseParameter(parametersMap, "JMP", (s) -> s.isEmpty() ? 0 : Integer.parseInt(s), (i) -> i >= 0),
+				parseParameter(parametersMap, "JBE", (s) -> s.isEmpty() ? 0 : Integer.parseInt(s), (i) -> i >= 0),
+				parseParameter(parametersMap, "Other parameters", (s) -> s, (s) -> true)
+		);
+
+		if (!(model instanceof SoftwareSimulator))
+			throw new PlasmaParameterException("This algorithm works only with a 'software-simulator' model.");
+
+		if (distributed)
+			//TODO
+			return null;
+		else
+			return new SwifiGenerator((SoftwareSimulator) model, reqs, algorithmOptions, getId());
+	}
+
+	@Override
+	public Class<?> getResourceHandler() {
+		//TODO
+		return null;
 	}
 
 }

@@ -14,6 +14,8 @@ import java.util.*;
 public class GdbSimulator extends Simulator {
 
     private GdbProcess gdbProcess;
+    private String loadedExecutable;
+    private String loadedFunction;
 
     private String gdbPath = null;
 
@@ -29,8 +31,8 @@ public class GdbSimulator extends Simulator {
     private static long stackStart;
     private static long stackEnd;
 
-    public GdbSimulator(String executable, String function, Map<String, Object> options) throws IllegalStateException {
-        super(executable, function, options);
+    public GdbSimulator(Map<String, Object> options) throws IllegalStateException {
+        super(options);
         if (options != null) {
             for (String s : options.keySet()) {
                 if (s.equals("CF") && options.get(s) instanceof Boolean) {
@@ -50,11 +52,21 @@ public class GdbSimulator extends Simulator {
 
     // call this before any other method !
     @Override
-    public void start() throws IOException {
+    public void start(String executable, String function, boolean withCache) throws IOException {
         if (gdbProcess == null) {
-            gdbProcess = new GdbProcess(new PrintStream(new OutputStream() { @Override public void write(int b) { } }), gdbPath);
+            gdbProcess = new GdbProcess(new PrintStream(new OutputStream() {
+                @Override
+                public void write(int b) {
+                }
+            }), gdbPath);
+        } else {
+            gdbProcess.wash();
+        }
+        if(!withCache || !(executable.equals(loadedExecutable) && function.equals(loadedFunction))) {
             File.file(gdbProcess, executable);
             Breakpoint.break_(gdbProcess, "*" + function);
+            loadedExecutable = executable;
+            loadedFunction = function;
         }
         ProgramExecution.run(gdbProcess);
 
@@ -113,7 +125,7 @@ public class GdbSimulator extends Simulator {
         ProgramExecution.nexti(gdbProcess);
         StackManipulation.Frame[] backtrace = StackManipulation.backtrace(gdbProcess);
         String currentFunc = backtrace[0].getFunc();
-        return this.function.equals(currentFunc);
+        return this.loadedFunction.equals(currentFunc);
     }
 
     @Override

@@ -28,16 +28,16 @@ public class MyResult implements SMCResult {
 	@Override
 	public InterfaceIdentifier[] getHeaders() {
 		InterfaceIdentifier[] ret = new InterfaceIdentifier[2];
-		ret[0] = probaId;
-		ret[1] = simId;
+		ret[0] = simId;
+		ret[1] = probaId;
 		return ret;
 	}
 
 	@Override
 	public Object getValueOf(String header) throws PlasmaExperimentException {
-		if (header == probaId.getName())
+		if (header.equals(probaId.getName()))
 			return probability;
-		else if (header == simId.getName())
+		else if (header.equals(simId.getName()))
 			return nbsimulations;
 		else
 			throw new PlasmaExperimentException("header " + header + " not found in MyResult.");
