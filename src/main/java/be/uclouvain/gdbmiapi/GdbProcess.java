@@ -94,7 +94,7 @@ public class GdbProcess {
     }*/
 
     public String readAvailable() throws IOException {
-        FutureTask<String> futureTask = new FutureTask<>(() -> {
+        Callable<String> task = () -> {
             InputStream is = pr.getInputStream();
             ByteArrayOutputStream buf = new ByteArrayOutputStream();
             StringBuilder builder = new StringBuilder();
@@ -113,15 +113,17 @@ public class GdbProcess {
                 }
             }
             return builder.toString();
-        });
+        };
 
+        ExecutorService executor = Executors.newCachedThreadPool();
+        Future<String> future = executor.submit(task);
         try {
-            futureTask.run();
-            return futureTask.get(30, TimeUnit.SECONDS);
+            return future.get(30, TimeUnit.SECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new GdbException("Could not get a response from GDB on time.");
         } finally {
-            futureTask.cancel(true);
+            future.cancel(true);
+            executor.shutdown();
         }
     }
 

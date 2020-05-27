@@ -209,7 +209,7 @@ public class SoftwareBLTLChecker extends AbstractRequirement {
         errors.clear();
         variables.clear();
 
-        String[] parts = content.split("\n(\\[BLTL\\]|\\[bltl\\])\n");
+        String[] parts = content.split("\\r?\\n((\\[BLTL\\])|(\\[bltl\\]))\\r?\\n");
         if (parts.length < 2) {
             this.errors.add(new PlasmaDataException("Missing the '[BLTL]' option."));
             return true;

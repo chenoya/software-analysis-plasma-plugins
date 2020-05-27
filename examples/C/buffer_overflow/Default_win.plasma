@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PlasmaProject name="Default">
   <models>
-    <model name="data_0" type="Executable_simulator">
+    <model name="data_0" type="software-simulator">
       <content>executable = "../software-analysis-plasma-plugins/examples/C/buffer_overflow/buffer_win.exe"
 function = "main"
 
@@ -23,13 +23,25 @@ b12 = "(int) buf[12]"</content>
   </models>
   <requirements>
     <requirement name="data_2" type="software-bltl-checker">
-      <content>G &lt;= #100 x!=100</content>
+      <content>[traces]
+type="print"
+
+[BLTL]
+G &lt;= #100 x!=100</content>
     </requirement>
     <requirement name="line" type="software-bltl-checker">
-      <content>G &lt;= #100 line!=34</content>
+      <content>[traces]
+type="print"
+
+[BLTL]
+G &lt;= #100 line!=34</content>
     </requirement>
     <requirement name="x100" type="software-bltl-checker">
-      <content>G &lt;= #100 $x!=100$</content>
+      <content>[traces]
+type="print"
+
+[BLTL]
+G &lt;= #100 $x!=100$</content>
     </requirement>
   </requirements>
   <resources />
