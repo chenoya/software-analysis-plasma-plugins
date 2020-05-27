@@ -1,0 +1,17 @@
+executable = "../../software-analysis-plasma-plugins/examples/C/buffer_overflow/buffer"
+function = "main"
+
+[simulator]
+name = "gdb"
+
+[simulator.options]
+CF = true
+OF = true
+STACK_M = true
+gdb_path = "/usr/bin/gdb"
+
+[variables]
+x = "x"
+r = "r"
+b0 = "(int) buf[0]"
+b12 = "(int) buf[12]"

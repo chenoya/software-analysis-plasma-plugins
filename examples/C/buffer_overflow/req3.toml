@@ -1,0 +1,5 @@
+[traces]
+type="print"
+
+[BLTL]
+G <= #100 $x!=100$
