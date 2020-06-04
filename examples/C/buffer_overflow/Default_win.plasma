@@ -11,7 +11,7 @@ name = "gdb"
 [simulator.options]
 CF = true
 OF = true
-STACK_M = true
+STACK_M = false
 gdb_path = "C:/Users/Antoine/MinGW/bin/gdb.exe"
 
 [variables]

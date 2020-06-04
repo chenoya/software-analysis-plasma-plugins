@@ -19,11 +19,11 @@ public class GdbSimulator extends Simulator {
 
     private String gdbPath = null;
 
-    private boolean cf_available = false;
+    private boolean cf_watch_enabled = false;
     private final static VariableIdentifier CF_ID = new VariableIdentifier("CF", "CF");
-    private boolean of_available = false;
+    private boolean of_watch_enabled = false;
     private final static VariableIdentifier OF_ID = new VariableIdentifier("OF", "OF");
-    private boolean stack_m_available = false;
+    private boolean stack_m_watch_enabled = false;
     private final static VariableIdentifier STACK_M = new VariableIdentifier("STACK_M", "STACK_M");
 
     private static boolean stackWatchAvailable;
@@ -36,11 +36,11 @@ public class GdbSimulator extends Simulator {
         if (options != null) {
             for (String s : options.keySet()) {
                 if (s.equals("CF") && options.get(s) instanceof Boolean) {
-                    cf_available = ((Boolean) options.get(s));
+                    cf_watch_enabled = ((Boolean) options.get(s));
                 } else if (s.equals("OF") && options.get(s) instanceof Boolean) {
-                    of_available = ((Boolean) options.get(s));
+                    of_watch_enabled = ((Boolean) options.get(s));
                 } else if (s.equals("STACK_M") && options.get(s) instanceof Boolean) {
-                    stack_m_available = ((Boolean) options.get(s));
+                    stack_m_watch_enabled = ((Boolean) options.get(s));
                 } else if (s.equals("gdb_path") && options.get(s) instanceof String)
                     gdbPath = (String) options.get(s);
                 else {
@@ -70,54 +70,58 @@ public class GdbSimulator extends Simulator {
         }
         ProgramExecution.run(gdbProcess);
 
-        String pid;
-        try {
-            pid = DataManipulation.data_eval_expr(gdbProcess, "(int) getpid()");
-        } catch (IOException e) {
-            stackWatchAvailable = false;
-            System.err.println("Can not get PID of process : " + e.getMessage());
-            return;
-        }
-        final Long[] start = {null};
-        final Long[] end = {null};
-        try {
-            Files.lines(Paths.get("/proc", pid, "maps")).forEach((line) -> {
-                if (line.contains("[stack]")) {
-                    String[] s = line.split("[ -]");
-                    try {
-                        start[0] = Long.parseUnsignedLong(s[0], 16);
-                        end[0] = Long.parseUnsignedLong(s[1], 16);
-                    } catch (IndexOutOfBoundsException | NumberFormatException ignored) {
+        if (stack_m_watch_enabled) {
+            String pid;
+            try {
+                pid = DataManipulation.data_eval_expr(gdbProcess, "(int) getpid()");
+            } catch (IOException e) {
+                stackWatchAvailable = false;
+                System.err.println("Can not get PID of process : " + e.getMessage());
+                return;
+            }
+            final Long[] start = {null};
+            final Long[] end = {null};
+            // could also be done using "info proc map" but only on Linux anyway
+            try {
+                Files.lines(Paths.get("/proc", pid, "maps")).forEach((line) -> {
+                    if (line.contains("[stack]")) {
+                        String[] s = line.split("[ -]");
+                        try {
+                            start[0] = Long.parseUnsignedLong(s[0], 16);
+                            end[0] = Long.parseUnsignedLong(s[1], 16);
+                        } catch (IndexOutOfBoundsException | NumberFormatException ignored) {
+                        }
                     }
-                }
-            });
-        } catch (IOException e) {
-            stackWatchAvailable = false;
-            System.err.println("Can not read process infos : " + e.getMessage());
-            return;
+                });
+            } catch (IOException e) {
+                stackWatchAvailable = false;
+                System.err.println("Can not read process infos : " + e.getMessage());
+                return;
+            }
+            long current;
+            try {
+                current = Long.parseUnsignedLong(DataManipulation.data_eval_expr(gdbProcess, "$sp").substring(2), 16);
+            } catch (IOException e) {
+                stackWatchAvailable = false;
+                System.err.println("Can not evaluate $sp : " + e.getMessage());
+                return;
+            }
+            if (start[0] == null || end[0] == null) {
+                stackWatchAvailable = false;
+                System.err.println("Can not get stack bounds from system");
+                return;
+            }
+            if (current < start[0] || current >= end[0]) {
+                stackWatchAvailable = false;
+                System.err.println("Stack pointer out of stack bounds");
+                return;
+            }
+            stackContent = null;
+            stackStart = current;
+            stackEnd = end[0];
+            stackWatchAvailable = true;
         }
-        long current;
-        try {
-            current = Long.parseUnsignedLong(DataManipulation.data_eval_expr(gdbProcess, "$sp").substring(2), 16);
-        } catch (IOException e) {
-            stackWatchAvailable = false;
-            System.err.println("Can not evaluate $sp : " + e.getMessage());
-            return;
-        }
-        if (start[0] == null || end[0] == null) {
-            stackWatchAvailable = false;
-            System.err.println("Can not get stack bounds from system");
-            return;
-        }
-        if (current < start[0] || current >= end[0]) {
-            stackWatchAvailable = false;
-            System.err.println("Stack pointer out of stack bounds");
-            return;
-        }
-        stackContent = null;
-        stackStart = current;
-        stackEnd = end[0];
-        stackWatchAvailable = true;
+
     }
 
     @Override
@@ -142,7 +146,7 @@ public class GdbSimulator extends Simulator {
     @Override
     public Optional<Long> getFileLine() {
         try {
-            return Optional.of(File.info_source(gdbProcess).getLine());
+            return Optional.of(File.infoSource(gdbProcess).getLine());
         } catch (IOException | NumberFormatException e) {
             System.err.println("Can not evaluate line number : " + e.getMessage());
             return Optional.empty();
@@ -152,11 +156,11 @@ public class GdbSimulator extends Simulator {
     @Override
     public List<VariableIdentifier> getSimulatorSpecificValuesNames() {
         List<VariableIdentifier> list = new ArrayList<>();
-        if (cf_available)
+        if (cf_watch_enabled)
             list.add(CF_ID);
-        if (of_available)
+        if (of_watch_enabled)
             list.add(OF_ID);
-        if (stack_m_available)
+        if (stack_m_watch_enabled)
             list.add(STACK_M);
         return list;
     }
@@ -165,7 +169,7 @@ public class GdbSimulator extends Simulator {
     public Map<VariableIdentifier, Optional<Double>> getSimulatorSpecificValues() {
         Map<VariableIdentifier, Optional<Double>> map = new HashMap<>();
 
-        if (cf_available) {
+        if (cf_watch_enabled) {
             try {
                 map.put(CF_ID, Optional.of(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("CF") ? 1.0 : 0.0));
             } catch (Exception e) {
@@ -174,7 +178,7 @@ public class GdbSimulator extends Simulator {
             }
         }
 
-        if (of_available) {
+        if (of_watch_enabled) {
             try {
                 map.put(OF_ID, Optional.of(DataManipulation.data_eval_expr(gdbProcess, "$eflags").contains("OF") ? 1.0 : 0.0));
             } catch (Exception e) {
@@ -183,7 +187,7 @@ public class GdbSimulator extends Simulator {
             }
         }
 
-        if (stack_m_available) {
+        if (stack_m_watch_enabled) {
             try {
                 if (stackWatchAvailable) {
                     byte[] newStack = DataManipulation.data_read_memory(gdbProcess, stackStart, stackEnd - stackStart);

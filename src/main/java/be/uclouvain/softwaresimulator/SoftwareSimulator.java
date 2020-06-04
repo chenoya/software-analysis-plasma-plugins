@@ -81,12 +81,7 @@ public class SoftwareSimulator extends AbstractModel {
         }
     }
 
-    public SoftwareSimulator(java.io.File file, String function) {
-        this.executable = file.getPath();
-        this.function = function;
-    }
-
-    public void addGdbExpressions(SoftwareBLTLChecker softwareBLTLChecker) {
+    public void addSimulatorExpressions(SoftwareBLTLChecker softwareBLTLChecker) {
         registeredCheckers.add(softwareBLTLChecker);
     }
 
@@ -102,7 +97,7 @@ public class SoftwareSimulator extends AbstractModel {
         this.withCache = withCache;
     }
 
-    private SoftwareState fill_state() {
+    private SoftwareState fillState() {
         Map<VariableIdentifier, Double> map = new HashMap<>();
         map.put(PC_ID, simulator.getProgramCounter().map(Utils::longToDoubleOrNaN).orElse(Double.NaN));
         map.put(LINE_ID, simulator.getFileLine().map(Utils::longToDoubleOrNaN).orElse(Double.NaN));
@@ -132,7 +127,7 @@ public class SoftwareSimulator extends AbstractModel {
         }
 
         trace = new ArrayList<>();
-        trace.add(fill_state());
+        trace.add(fillState());
         return getCurrentState();
     }
 
@@ -160,7 +155,7 @@ public class SoftwareSimulator extends AbstractModel {
                 atDeadlock = true;
                 throw new PlasmaDeadlockException(getCurrentState(), getTraceLength());
             }
-            trace.add(fill_state());
+            trace.add(fillState());
             return getCurrentState();
         } catch (IOException e) {
             throw new PlasmaSimulatorException(e.getMessage());

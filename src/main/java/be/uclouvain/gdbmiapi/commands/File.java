@@ -39,7 +39,7 @@ public class File {
      * @throws IOException
      * @throws GdbException
      */
-    public static void file_exec(GdbProcess gdbProcess, Path file) throws IOException, GdbException {
+    public static void fileExec(GdbProcess gdbProcess, Path file) throws IOException, GdbException {
         String res = gdbProcess.executeGDBCommand("-file-exec-file \"" + StringEscapeUtils.escapeJava(file.toString()) + "\"");
         Utils.checkDone(res);
     }
@@ -84,7 +84,7 @@ public class File {
      * @throws IOException
      * @throws GdbException
      */
-    public static InfoSourceOutput info_source(GdbProcess gdbProcess) throws IOException, GdbException {
+    public static InfoSourceOutput infoSource(GdbProcess gdbProcess) throws IOException, GdbException {
         String res = gdbProcess.executeGDBCommand("-file-list-exec-source-file");
         MIOutputParser.OutputContext output = ParseMI.parse(res);
         assertOrThrow(res, output.result_record() != null);

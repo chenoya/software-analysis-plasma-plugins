@@ -87,7 +87,7 @@ public class SoftwareBLTLChecker extends AbstractRequirement {
             throw new RuntimeException("The \"BLTL with traces for software simulations\" checker works only with " +
                     "the \"Software simulator\"");
         }
-        this.model.addGdbExpressions(this);
+        this.model.addSimulatorExpressions(this);
         bltlRequirement.setModel(abstractModel);
     }
 
