@@ -1,24 +1,30 @@
 package be.uclouvain.swifigenerator;
 
 public class AlgorithmOptions {
+    private String cmdSwifi;
     private long nbMaxSimu;
     private int nop;
     private int z1b;
     private int z1w;
     private int flp;
-    private int jmp;
-    private int jbe;
+    //private int jmp;
+    //private int jbe;
     private String otherParams;
 
-    public AlgorithmOptions(long nbMaxSimu, int nop, int z1b, int z1w, int flp, int jmp, int jbe, String otherParams) {
+    public AlgorithmOptions(String cmdSwifi, long nbMaxSimu, int nop, int z1b, int z1w, int flp, String otherParams) {
+        this.cmdSwifi = cmdSwifi;
         this.nbMaxSimu = nbMaxSimu;
         this.nop = nop;
         this.z1b = z1b;
         this.z1w = z1w;
         this.flp = flp;
-        this.jmp = jmp;
-        this.jbe = jbe;
+        //this.jmp = jmp;
+        //this.jbe = jbe;
         this.otherParams = otherParams;
+    }
+
+    public String getCmdSwifi() {
+        return cmdSwifi;
     }
 
     public long getNbMaxSimu() {
@@ -41,13 +47,13 @@ public class AlgorithmOptions {
         return flp;
     }
 
-    public int getJmp() {
+    /*public int getJmp() {
         return jmp;
-    }
+    }*/
 
-    public int getJbe() {
+    /*public int getJbe() {
         return jbe;
-    }
+    }*/
 
     public String getOtherParams() {
         return otherParams;

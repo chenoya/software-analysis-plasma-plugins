@@ -62,8 +62,7 @@ public class SwifiGenerator extends AbstractAlgorithm {
 
 			Runtime rt = Runtime.getRuntime();
 			List<String> params = new ArrayList<>();
-			params.add("python3");
-			params.add("/home/antoine/Documents/Unif/TFE/SWIFI_Tool/swifitool/faults_inject.py");
+			params.add(algorithmOptions.getCmdSwifi()); // "C:\Users\Antoine\AppData\Local\Programs\Python\Python36\python.exe" "C:\Users\Antoine\Downloads\TFE\swifi-tool\swifitool\faults_inject.py"
 			params.add("-i");
 			params.add(oldExecutable);
 			params.add("-o");
@@ -82,7 +81,7 @@ public class SwifiGenerator extends AbstractAlgorithm {
 			}
 			String pythonErrorMsg = buf.toString(StandardCharsets.UTF_8.name());
 			if (!pythonErrorMsg.isEmpty()) {
-				throw new PlasmaSimulatorException(pythonErrorMsg);
+				throw new IllegalArgumentException(pythonErrorMsg);
 			}
 
 			InterfaceState path = model.newPath();
@@ -96,8 +95,8 @@ public class SwifiGenerator extends AbstractAlgorithm {
 			notifyResults();
 			notifyProgress();
 
-		} catch (IOException | InterruptedException e) {
-			listener.notifyAlgorithmError(nodeURI, e.toString());
+		} catch (IOException | InterruptedException | IllegalArgumentException e) {
+			listener.notifyAlgorithmError(nodeURI, e.getMessage());
 			throw new RuntimeException(e);
 		} catch (PlasmaSimulatorException | PlasmaCheckerException e) {
 			System.out.println(Arrays.toString(selectedOption.toArray()));
@@ -122,23 +121,33 @@ public class SwifiGenerator extends AbstractAlgorithm {
 
 		List<OptionIter> options = new ArrayList<>();
 		for (int i = 0; i < algorithmOptions.getNop(); i++) {
-			options.add(new OptionIter("NOP", fileSize));
+			if (algorithmOptions.getOtherParams().contains("ARM") || algorithmOptions.getOtherParams().contains("arm")) {
+				options.add(new OptionIter("NOP", fileSize - 1));
+			} else {
+				options.add(new OptionIter("NOP", fileSize));
+			}
 		}
 		for (int i = 0; i < algorithmOptions.getZ1b(); i++) {
 			options.add(new OptionIter("Z1B", fileSize));
 		}
 		for (int i = 0; i < algorithmOptions.getZ1w(); i++) {
-			options.add(new OptionIter("NOP", fileSize));
+			try {
+				int word = Integer.parseInt(algorithmOptions.getOtherParams().split("-w ?")[1].split(" ")[0]);
+				options.add(new OptionIter("Z1W", fileSize - word + 1));
+			} catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
+				options.add(new OptionIter("Z1W", fileSize));
+			}
 		}
 		for (int i = 0; i < algorithmOptions.getFlp(); i++) {
 			options.add(new OptionIterFlp("FLP", fileSize));
 		}
-		for (int i = 0; i < algorithmOptions.getJmp(); i++) {
+		//TODO
+		/*for (int i = 0; i < algorithmOptions.getJmp(); i++) {
 			options.add(new OptionIter("JMP", fileSize));
 		}
 		for (int i = 0; i < algorithmOptions.getJbe(); i++) {
 			options.add(new OptionIter("JBE", fileSize));
-		}
+		}*/
 
 		nbIter = 0;
 		results = new double[requirements.size()];
