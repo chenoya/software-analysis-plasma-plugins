@@ -1,7 +1,8 @@
 package be.uclouvain.swifigenerator;
 
 public class AlgorithmOptions {
-    private String cmdSwifi;
+    private String pythonPath;
+    private String swifiPath;
     private long nbMaxSimu;
     private int nop;
     private int z1b;
@@ -11,8 +12,9 @@ public class AlgorithmOptions {
     //private int jbe;
     private String otherParams;
 
-    public AlgorithmOptions(String cmdSwifi, long nbMaxSimu, int nop, int z1b, int z1w, int flp, String otherParams) {
-        this.cmdSwifi = cmdSwifi;
+    public AlgorithmOptions(String pythonPath, String swifiPath, long nbMaxSimu, int nop, int z1b, int z1w, int flp, String otherParams) {
+        this.pythonPath = pythonPath;
+        this.swifiPath = swifiPath;
         this.nbMaxSimu = nbMaxSimu;
         this.nop = nop;
         this.z1b = z1b;
@@ -23,8 +25,12 @@ public class AlgorithmOptions {
         this.otherParams = otherParams;
     }
 
-    public String getCmdSwifi() {
-        return cmdSwifi;
+    public String getPythonPath() {
+        return pythonPath;
+    }
+
+    public String getSwifiPath() {
+        return swifiPath;
     }
 
     public long getNbMaxSimu() {

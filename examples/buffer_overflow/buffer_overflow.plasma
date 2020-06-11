@@ -2,7 +2,7 @@
 <PlasmaProject name="Default">
   <models>
     <model name="data_0" type="software-simulator">
-      <content>executable = "../../software-analysis-plasma-plugins/examples/C/buffer_overflow/buffer"
+      <content>executable = "../software-analysis-plasma-plugins/examples/buffer_overflow/buffer_overflow"
 function = "main"
 
 [simulator]
@@ -22,33 +22,19 @@ b12 = "(int) buf[12]"</content>
     </model>
   </models>
   <requirements>
-    <requirement name="data_2" type="software-bltl-checker">
-      <content>[traces]
-type="print"
-
-[BLTL]
-G &lt;= #100 x!=100</content>
-    </requirement>
-    <requirement name="line" type="software-bltl-checker">
-      <content>[traces]
-type="print"
-
-[BLTL]
-G &lt;= #100 line!=34</content>
-    </requirement>
-    <requirement name="x100" type="software-bltl-checker">
+    <requirement name="req_1" type="software-bltl-checker">
       <content>[traces]
 type="print"
 
 [BLTL]
 G &lt;= #100 $x!=100$</content>
     </requirement>
-    <requirement name="x200" type="software-bltl-checker">
+    <requirement name="req_2" type="software-bltl-checker">
       <content>[traces]
 type="print"
 
 [BLTL]
-G &lt;= #100 $x!=200$</content>
+G &lt;= #100 line!=38</content>
     </requirement>
   </requirements>
   <resources />

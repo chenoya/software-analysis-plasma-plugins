@@ -92,7 +92,7 @@ The `traces.type` can be
 * `'one per file'` : output one faulty trace per file called `prefix + a number` in the `folder`,
 * `'all in one file'` : output all faulty traces in a file called `prefix` in `folder`.
 
-The BLTL property comes After the BLTL tag. It follows the [syntax from the existing plugin](http://plasma-lab.gforge.inria.fr/plasma_lab_doc/1.4.4/html/languages/bltl.html#b-ltl-grammar)
+The BLTL property comes after the BLTL tag. It follows the [syntax from the existing plugin](http://plasma-lab.gforge.inria.fr/plasma_lab_doc/1.4.4/html/languages/bltl.html#b-ltl-grammar)
 and adds the possiblilty to insert boolean expression inside the property between two `$` (A `$` in the expression can be inserted by writing `$$`).
 ```
 Formula ::= '$' Debugger_expression '$'

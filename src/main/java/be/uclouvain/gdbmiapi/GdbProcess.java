@@ -12,11 +12,17 @@ import java.util.concurrent.*;
 public class GdbProcess {
 
     private PrintStream out;
-
     private Process pr;
+    private String path;
 
     public GdbProcess(PrintStream out, String path) throws IOException, GdbException {
         this.out = out;
+        this.path = path;
+        createProcess();
+        //disableAsyncExec();
+    }
+
+    private void createProcess() throws IOException {
         Runtime rt = Runtime.getRuntime();
         if (path == null) {
             this.pr = rt.exec("gdb --interpreter=mi");
@@ -25,7 +31,6 @@ public class GdbProcess {
         }
         String res = readAvailable();
         out.println(res);
-        //disableAsyncExec();
     }
 
     public String readAvailable() throws IOException {
@@ -53,8 +58,10 @@ public class GdbProcess {
         ExecutorService executor = Executors.newCachedThreadPool();
         Future<String> future = executor.submit(task);
         try {
-            return future.get(30, TimeUnit.SECONDS);
+            return future.get(5, TimeUnit.SECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            this.pr.destroy();
+            createProcess();
             throw new GdbException("Could not get a response from GDB on time.");
         } finally {
             future.cancel(true);

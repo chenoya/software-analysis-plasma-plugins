@@ -53,7 +53,8 @@ public class SwifiGeneratorFactory implements InterfaceAlgorithmFactory {
 	public List<SMCParameter> getParametersList() {
 		if (parameters == null) {
 			parameters = new ArrayList<>();
-			parameters.add(new SMCParameter("SWIFI cmd", "Command line to launch the SWIFI tool", false));
+			parameters.add(new SMCParameter("Python path", "Path to Python 3", false));
+			parameters.add(new SMCParameter("SWIFI path", "Path to the SWIFI tool python file", false));
 			parameters.add(new SMCParameter("Max simul", "Maximum nmber of simulations", false));
 			parameters.add(new SMCParameter("NOP", "Number of NOP used", false));
 			parameters.add(new SMCParameter("Z1B", "Number of Z1B used", false));
@@ -69,16 +70,17 @@ public class SwifiGeneratorFactory implements InterfaceAlgorithmFactory {
 	@Override
 	public void fillParametersMap(Map<String, Object> parametersMap, String[] parameters) throws PlasmaParameterException {
 		try{
-			if(parameters.length == 9) {
-				parametersMap.put("SWIFI cmd", parameters[0]);
-				parametersMap.put("Max simul", parameters[1].length() == 0 ? Long.MAX_VALUE : Long.parseLong(parameters[1]));
-				parametersMap.put("NOP", parameters[2].length() == 0 ? 0 : Integer.parseInt(parameters[2]));
-				parametersMap.put("Z1B", parameters[3].length() == 0 ? 0 : Integer.parseInt(parameters[3]));
-				parametersMap.put("Z1W", parameters[4].length() == 0 ? 0 : Integer.parseInt(parameters[4]));
-				parametersMap.put("FLP", parameters[5].length() == 0 ? 0 : Integer.parseInt(parameters[5]));
+			if(parameters.length == 8) {
+				parametersMap.put("Python path", parameters[0]);
+				parametersMap.put("SWIFI path", parameters[1]);
+				parametersMap.put("Max simul", parameters[2].length() == 0 ? Long.MAX_VALUE : Long.parseLong(parameters[2]));
+				parametersMap.put("NOP", parameters[3].length() == 0 ? 0 : Integer.parseInt(parameters[3]));
+				parametersMap.put("Z1B", parameters[4].length() == 0 ? 0 : Integer.parseInt(parameters[4]));
+				parametersMap.put("Z1W", parameters[5].length() == 0 ? 0 : Integer.parseInt(parameters[5]));
+				parametersMap.put("FLP", parameters[6].length() == 0 ? 0 : Integer.parseInt(parameters[6]));
 				//parametersMap.put("JMP", parameters[6].length() == 0 ? 0 : Integer.parseInt(parameters[6]));
 				//parametersMap.put("JBE", parameters[7].length() == 0 ? 0 : Integer.parseInt(parameters[7]));
-				parametersMap.put("Other parameters", parameters[8]);
+				parametersMap.put("Other parameters", parameters[7]);
 			} else {
 				throw new PlasmaParameterException("Wrong number of parameters for the " + getName() + " algorithm.");
 			}
@@ -120,7 +122,8 @@ public class SwifiGeneratorFactory implements InterfaceAlgorithmFactory {
 			throw new PlasmaParameterException("Invalid option format : distributed");
 
 		AlgorithmOptions algorithmOptions = new AlgorithmOptions(
-				parseParameter(parametersMap, "SWIFI cmd", (s) -> s, (s) -> true),
+				parseParameter(parametersMap, "Python path", (s) -> s, (s) -> true),
+				parseParameter(parametersMap, "SWIFI path", (s) -> s, (s) -> true),
 				parseParameter(parametersMap, "Max simul", (s) -> s.isEmpty() ? Long.MAX_VALUE : Long.parseLong(s), (i) -> i >= 0),
 				parseParameter(parametersMap, "NOP", (s) -> s.isEmpty() ? 0 : Integer.parseInt(s), (i) -> i >= 0),
 				parseParameter(parametersMap, "Z1B", (s) -> s.isEmpty() ? 0 : Integer.parseInt(s), (i) -> i >= 0),

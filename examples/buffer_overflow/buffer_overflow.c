@@ -22,6 +22,10 @@
 0x..decf  |        0x0
 */
 
+/*
+compiled with : gcc -g -o buffer_overflow buffer_overflow.c -fno-stack-protector
+*/
+
 int main(int argc, char **argv) {
     int x = 42;
     char buf[8];

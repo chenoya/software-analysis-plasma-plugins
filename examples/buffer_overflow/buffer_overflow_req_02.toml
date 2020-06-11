@@ -2,4 +2,4 @@
 type="print"
 
 [BLTL]
-G <= #100 x!=100
+G <= #100 line!=38

@@ -1,5 +1,0 @@
-[traces]
-type="print"
-
-[BLTL]
-G <= #100 line!=34

@@ -1,4 +1,4 @@
-executable = "../../software-analysis-plasma-plugins/examples/C/buffer_overflow/buffer"
+executable = "../software-analysis-plasma-plugins/examples/buffer_overflow/buffer_overflow"
 function = "main"
 
 [simulator]

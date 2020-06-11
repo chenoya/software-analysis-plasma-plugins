@@ -7,17 +7,25 @@ import fr.inria.plasmalab.workflow.exceptions.PlasmaExperimentException;
 import fr.inria.plasmalab.workflow.shared.ResultIdentifier;
 
 public class MyResult implements SMCResult {
-	private static final ResultIdentifier probaId = new ResultIdentifier("Probability", false);
-	private static final ResultIdentifier simId = new ResultIdentifier("#Simulations", false);
+	private static final ResultIdentifier nbSimId = new ResultIdentifier("#Simulations", false);
+	private static final ResultIdentifier positiveId = new ResultIdentifier("#Validated", false);
+	private static final ResultIdentifier crashedId = new ResultIdentifier("#Crashed/Could not retrieve", false);
+	private static final ResultIdentifier negativeId = new ResultIdentifier("#Invalidated", false);
+	//private static final ResultIdentifier probaId = new ResultIdentifier("Probability", false);
 
 	private AbstractRequirement origin;
-	private double probability;
-	private int nbsimulations;
-	
-	public MyResult(AbstractRequirement req, double proba, int nbsims) {
+	//private double probability;
+	private int nbSimu;
+	private int positiveSimu;
+	private int crashedSimu;
+	private int negativeSimu;
+
+	public MyResult(AbstractRequirement req, int nbSimu, int positiveSimu, int crashedSimu, int negativeSimu) {
 		this.origin = req;
-		this.probability = proba;
-		this.nbsimulations = nbsims;
+		this.nbSimu = nbSimu;
+		this.positiveSimu = positiveSimu;
+		this.crashedSimu = crashedSimu;
+		this.negativeSimu = negativeSimu;
 	}
 	
 	@Override
@@ -27,28 +35,39 @@ public class MyResult implements SMCResult {
 
 	@Override
 	public InterfaceIdentifier[] getHeaders() {
-		InterfaceIdentifier[] ret = new InterfaceIdentifier[2];
-		ret[0] = simId;
-		ret[1] = probaId;
+		InterfaceIdentifier[] ret = new InterfaceIdentifier[4];
+		ret[0] = nbSimId;
+		ret[1] = positiveId;
+		ret[2] = crashedId;
+		ret[3] = negativeId;
+		//ret[4] = probaId;
 		return ret;
 	}
 
 	@Override
 	public Object getValueOf(String header) throws PlasmaExperimentException {
-		if (header.equals(probaId.getName()))
-			return probability;
-		else if (header.equals(simId.getName()))
-			return nbsimulations;
+		if (header.equals(nbSimId.getName()))
+			return nbSimu;
+		else if (header.equals(positiveId.getName()))
+			return positiveSimu;
+		else if (header.equals(crashedId.getName()))
+			return crashedSimu;
+		else if (header.equals(negativeId.getName()))
+			return negativeSimu;
 		else
 			throw new PlasmaExperimentException("header " + header + " not found in MyResult.");
 	}
 
 	@Override
 	public Object getValueOf(InterfaceIdentifier id) throws PlasmaExperimentException {
-		if (id == probaId)
-			return probability;
-		else if (id == simId)
-			return nbsimulations;
+		if (id == nbSimId)
+			return nbSimu;
+		else if (id == positiveId)
+			return positiveSimu;
+		else if (id == crashedId)
+			return crashedSimu;
+		else if (id == negativeId)
+			return negativeSimu;
 		else
 			throw new PlasmaExperimentException("header ID " + id.getName() + " not found in MyResult.");
 	}
@@ -60,12 +79,12 @@ public class MyResult implements SMCResult {
 
 	@Override
 	public double getPr() {
-		return probability;
+		return (positiveSimu + crashedSimu) / (double) nbSimu;
 	}
 
 	@Override
 	public int getTotalCount() {
-		return nbsimulations;
+		return nbSimu;
 	}
 
 }

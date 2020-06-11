@@ -31,7 +31,9 @@ public class SwifiGenerator extends AbstractAlgorithm {
 	}
 
 	private long nbIter = 0;
-	private double[] results;
+	private int[] results_pos;
+	private int[] results_err;
+	private int[] results_neg;
 
 
 	private void combination(List<OptionIter> options, int level, List<String> selectedOption) {
@@ -62,7 +64,8 @@ public class SwifiGenerator extends AbstractAlgorithm {
 
 			Runtime rt = Runtime.getRuntime();
 			List<String> params = new ArrayList<>();
-			params.add(algorithmOptions.getCmdSwifi()); // "C:\Users\Antoine\AppData\Local\Programs\Python\Python36\python.exe" "C:\Users\Antoine\Downloads\TFE\swifi-tool\swifitool\faults_inject.py"
+			params.add(algorithmOptions.getPythonPath());
+			params.add(algorithmOptions.getSwifiPath());
 			params.add("-i");
 			params.add(oldExecutable);
 			params.add("-o");
@@ -84,12 +87,17 @@ public class SwifiGenerator extends AbstractAlgorithm {
 				throw new IllegalArgumentException(pythonErrorMsg);
 			}
 
+			System.out.println(Arrays.toString(selectedOption.toArray()));
+
 			InterfaceState path = model.newPath();
 			for (int i = 0; i < requirements.size(); i++) {
 				double res = requirements.get(i).check(path);
-				if (res > 0) {
-					results[i] += res;
-				}
+				if (res == 1.0)
+					results_pos[i] += 1;
+				else if (res == 0.0)
+					results_neg[i] += 1;
+				else
+					results_err[i] += 1;
 			}
 			nbIter++;
 			notifyResults();
@@ -99,9 +107,10 @@ public class SwifiGenerator extends AbstractAlgorithm {
 			listener.notifyAlgorithmError(nodeURI, e.getMessage());
 			throw new RuntimeException(e);
 		} catch (PlasmaSimulatorException | PlasmaCheckerException e) {
-			System.out.println(Arrays.toString(selectedOption.toArray()));
 			System.out.println(e.getMessage());
-			// assume res = 0 for all checkers so just update nbIter
+			for (int i = 0; i < requirements.size(); i++) {
+				results_err[i] += 1;
+			}
 			nbIter++;
 			notifyResults();
 			notifyProgress();
@@ -150,7 +159,9 @@ public class SwifiGenerator extends AbstractAlgorithm {
 		}*/
 
 		nbIter = 0;
-		results = new double[requirements.size()];
+		results_pos = new int[requirements.size()];
+		results_err = new int[requirements.size()];
+		results_neg = new int[requirements.size()];
 		nbIterEsti = 1;
 		for (OptionIter i : options) {
 			nbIterEsti *= i.nbIter();
@@ -179,7 +190,7 @@ public class SwifiGenerator extends AbstractAlgorithm {
 	private void notifyResults() {
 		List<ResultInterface> resultList = new ArrayList<>(requirements.size());
 		for (int i = 0; i < requirements.size(); i++) {
-			resultList.add(new MyResult(requirements.get(i), results[i] / nbIter, (int) nbIter));
+			resultList.add(new MyResult(requirements.get(i), (int) nbIter, results_pos[i], results_err[i], results_neg[i]));
 		}
 		listener.publishResults(nodeURI, resultList);
 	}
