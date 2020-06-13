@@ -1,0 +1,15 @@
+executable = "../software-analysis-plasma-plugins/examples/swifi_integer_overflow/integer_overflow"
+function = "_start"
+
+[simulator]
+name = "gdb"
+
+[simulator.options]
+CF = true
+OF = true
+STACK_M = false
+gdb_path = "/usr/bin/gdb"
+
+[variables]
+eax = "$eax"
+ebx = "$ebx"
