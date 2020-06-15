@@ -1,22 +1,34 @@
 # Software analysis Plasma plugins
 This repository contains three plugins allowing performing properties verification on an executable software.
-The plugins intergrate with [Plasma](https://project.inria.fr/plasma-lab/), a statistical model checking platform.
-The tool is based on the use of debuggers like [GDB](https://www.gnu.org/software/gdb/) to perform the simulation of the model 
+The plugins integrate with [Plasma](https://project.inria.fr/plasma-lab/) (version 1.4.4), a statistical model checking platform.
+The tool is based on the use of debuggers like [GDB](https://www.gnu.org/software/gdb/) (version 7+) to perform the simulation of the model 
 and retrieve data which is then used to check the desired properties.
 
 ## Build and installation
-To build the plugin and install it inside Plasma, simply run :
-```
-mvn package
-```
-This will compile everything, build a JAR file and install it inside Plasma.
-Plasma has to be present on the system, and the expected directory structure is the following :
+First, you will need to clone this repository and download [Plasma 1.4.4](https://project.inria.fr/plasma-lab/download/).
+The expected directory structure is the following :
 ```
 .
 ├─ software-analysis-plasma-plugins/
 ├─ plasmalab-1.4.4/
 ```
 If the structure is different, you can edit the path's configuration in the `properties` fields in the `pom.xml` files. 
+
+To build the plugins and install them inside Plasma, simply run the following [Maven](https://maven.apache.org/install.html) command in 
+the `software-analysis-plasma-plugins/` directory :
+```
+mvn package
+```
+This will compile everything, build a JAR file and install it inside Plasma.
+
+You can also download the JAR file [directly](https://github.com/chenoya/software-analysis-plasma-plugins/releases/) and save it to `plasmalab-1.4.4/plugins/`.
+
+To start using Plasma and the plugins, run this command in the `plasmalab-1.4.4/` folder :
+```
+java -jar libs/fr.inria.plasmalab.uiterminal-1.4.4.jar launch
+```
+
+You can now import an example or create you own configuration.
 
 ## Plugin 1 : Software Simulator
 This plugin uses GDB to simulate an executable and retrieve values. 
